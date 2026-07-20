@@ -1,3 +1,10 @@
+# === Datasets (no se versionan: ~790 MB / 21k archivos) ===
+# Se descargan con src/download_data.py — ver README.
+datasets/
+# Pesos y resultados de entrenamiento de Ultralytics
+runs/
+*.pt
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
