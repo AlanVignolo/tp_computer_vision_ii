@@ -1,286 +1,324 @@
 \documentclass[conference]{IEEEtran}
 \IEEEoverridecommandlockouts
 % The preceding line is only needed to identify funding in the first footnote. If that is unneeded, please comment it out.
-%Template version as of 6/27/2024
-
 \usepackage{cite}
 \usepackage{amsmath,amssymb,amsfonts}
 \usepackage{algorithmic}
 \usepackage{graphicx}
 \usepackage{textcomp}
 \usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{url}
+\usepackage{microtype}
+
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
 \begin{document}
 
-\title{Estudio comparativo de modelos YOLOv11, UNet++ y PIDNet para segmentación de grietas en infraestructura civil\\
-
-\thanks{Identify applicable funding agency here. If none, delete this.}
+\title{Estudio Comparativo de Modelos YOLOv11, UNet++ y PIDNet para la Segmentación Semántica de Grietas en Infraestructura Civil\\
+\thanks{Trabajo Práctico Final presentado para la asignatura Visión por Computadora II, Carrera de Especialización en Inteligencia Artificial (CEIA), Facultad de Ingeniería, Universidad de Buenos Aires (FIUBA).}
 }
 
 \author{\IEEEauthorblockN{1\textsuperscript{st} Martin Gabriel Quiroga}
 \IEEEauthorblockA{\textit{Facultad de Ingeniería} \\
-\textit{Universidad de Buenos Aires}\\
+\textit{Universidad de Buenos Aires (FIUBA)}\\
 Buenos Aires, Argentina \\
 quiroga.m.gabriel@gmail.com}
 \and
 \IEEEauthorblockN{2\textsuperscript{nd} Agustín Biancardi}
 \IEEEauthorblockA{\textit{Facultad de Ingeniería} \\
-\textit{Universidad de Buenos Aires}\\
+\textit{Universidad de Buenos Aires (FIUBA)}\\
 Buenos Aires, Argentina \\
-email address or ORCID}
+abiancardi@fi.uba.ar}
 \and
 \IEEEauthorblockN{3\textsuperscript{rd} Alan Vignolo}
 \IEEEauthorblockA{\textit{Facultad de Ingeniería} \\
-\textit{Universidad de Buenos Aires}\\
+\textit{Universidad de Buenos Aires (FIUBA)}\\
 Buenos Aires, Argentina \\
-email address or ORCID}
-
+alan.vignolo@gmail.com}
 }
 
 \maketitle
 
 \begin{abstract}
-
-\textbf{COMPLETAR RESULTADOS}
-
-La detección automática de grietas en infraestructura civil es fundamental para optimizar las tareas de inspección y mantenimiento, tradicionalmente realizadas de forma manual, lenta y subjetiva. Este trabajo presenta un estudio comparativo de tres modelos de segmentación semántica (YOLOv11, UNet++ y PIDNet) entrenados y evaluados sobre el dataset DeepCrack bajo un protocolo experimental común. El desempeño de cada modelo se evalúa en términos de mean Intersection over Union (mIoU) y tiempo de inferencia por imagen. Los resultados preliminares indican que [Modelo X] alcanza el mayor mIoU ([valor]), mientras que [Modelo Y] presenta el menor tiempo de inferencia ([valor]), evidenciando un compromiso entre precisión de segmentación y velocidad de procesamiento. Estos hallazgos buscan aportar criterios prácticos para la selección de modelos de segmentación en aplicaciones de monitoreo de infraestructura, incluyendo escenarios que requieren procesamiento en tiempo real.
+La detección temprana y delimitación precisa de fisuras en estructuras civiles (puentes, pavimentos y presas) resulta crítica para la planificación del mantenimiento preventivo y la seguridad estructural. Tradicionalmente, este monitoreo se realiza mediante inspecciones visuales manuales, un procedimiento subjetivo, costoso y de alto riesgo en zonas de difícil acceso. Este trabajo presenta un estudio comparativo de tres arquitecturas de segmentación semántica representativas del estado del arte contemporáneo: UNet++ (enfoque clásico basado en conexiones densas anidadas), PIDNet (arquitectura de tres ramas diseñada para segmentación en tiempo real guiada por bordes) y YOLOv11-Seg (detector de una etapa de última generación adaptado a segmentación). Los modelos fueron evaluados sobre el dataset público DeepCrack utilizando un entorno de hardware estandarizado (GPU NVIDIA Tesla T4). El desempeño se analiza cuantitativa y cualitativamente en función de la precisión a nivel de píxel ($mIoU$ global e $IoU$ específico de grieta) y la eficiencia computacional (latencia de inferencia y tasa de cuadros por segundo). Los resultados revelan un marcado compromiso técnico: mientras que UNet++ alcanza la mayor fidelidad de segmentación ($IoU_{\text{grieta}} = 0.7314$, $mIoU = 0.8588$), los modelos orientados a tiempo real demuestran un balance operativo superior, alcanzando PIDNet un $IoU_{\text{grieta}}$ de $0.6660$ a $17.04$~FPS y YOLOv11-Seg hasta $0.6756$ de $IoU_{\text{grieta}}$ con mínimo costo de cómputo. Finalmente, se analizan críticamente las limitaciones metodológicas del desarrollo descentralizado y se proponen criterios de selección para la integración en sistemas de inspección robótica y vehículos aéreos no tripulados (UAVs).
 \end{abstract}
 
 \begin{IEEEkeywords}
-semantic segmentation, crack detection, YOLOv11, UNet++, PIDNet, DeepCrack, mIoU
+Segmentación semántica, detección de grietas, visión por computadora, DeepCrack, PIDNet, UNet++, YOLOv11, infraestructura civil, tiempo real.
 \end{IEEEkeywords}
 
-\section{Introduction}
+\section{Introducción}
 
-\textbf{COMPLETAR REFERENCIAS}
+El monitoreo continuo y periódico de la infraestructura civil (puentes, autopistas, túneles, diques y edificaciones) es indispensable para preservar la integridad física y prolongar la vida útil de las obras públicas y privadas. Las grietas y microfisuras en el hormigón constituyen los primeros síntomas visibles de degradación estructural producidos por fatiga del material, asentamientos o factores ambientales adversos. Una detección incipiente permite intervenir oportunamente mediante acciones de mantenimiento preventivo, mitigando el riesgo de colapsos catastróficos y reduciendo sustancialmente los costos de reparación~\cite{kaveh2024recent}. Históricamente, estas tareas han dependido de la inspección visual manual in situ por parte de personal técnico especializado. No obstante, este enfoque convencional adolece de limitaciones intrínsecas: es lento, costoso, cualitativo, dependiente de la subjetividad del operador y conlleva un peligro inherente cuando se inspeccionan estructuras a gran altura o de acceso restringido~\cite{perry2020streamlined}.
 
-El monitoreo periódico de la infraestructura civil (puentes, pavimentos, túneles y edificaciones) es esencial para garantizar su seguridad estructural y prolongar su vida útil. Las grietas constituyen uno de los primeros indicadores visibles de deterioro, por lo que su detección temprana permite priorizar intervenciones de mantenimiento y prevenir fallas mayores. Tradicionalmente, esta inspección se realiza mediante evaluación visual manual, un proceso que resulta lento, costoso, dependiente de la experiencia del inspector y, en muchos casos, riesgoso cuando se trata de estructuras de difícil acceso \cite{ref1}.
+En los últimos años, el avance acelerado de las técnicas de visión por computadora y el aprendizaje profundo (\textit{deep learning}) ha posibilitado la automatización masiva de la inspección estructural~\cite{kaveh2024recent}. A diferencia de los métodos de clasificación de imágenes o de detección mediante cajas delimitadoras (\textit{bounding boxes}), la segmentación semántica resulta indispensable para este dominio, ya que clasifica cada píxel de la imagen (grieta versus fondo). Esto permite caracterizar la geometría intrínseca de la fisura, su longitud, espesor promedio, conectividad topológica y evolución temporal, insumos básicos para el cálculo de índices de daño estructural.
 
-En los últimos años, los métodos basados en visión artificial y aprendizaje profundo han emergido como una alternativa efectiva para automatizar esta tarea, permitiendo una detección más rápida, objetiva y escalable \cite{ref2}. En particular, la segmentación semántica, a diferencia de la clasificación o detección por bounding boxes, permite delimitar con precisión a nivel de píxel la extensión y morfología de las grietas, lo cual resulta clave para estimar su severidad. Arquitecturas encoder-decoder como U-Net y sus variantes han sido ampliamente utilizadas con este fin \cite{ref3}, mientras que estudios más recientes han explorado modelos orientados a la eficiencia computacional y el procesamiento en tiempo real, motivados por su posible integración en sistemas de inspección embebidos o drones \cite{ref4}. Sin embargo, gran parte de la literatura evalúa estos modelos de forma aislada, sin un protocolo experimental común que permita comparar de manera directa su precisión de segmentación frente a su costo computacional \cite{ref5}.
+La viabilidad práctica de estos sistemas ha sido validada en diversos proyectos y pruebas de campo reales de infraestructura civil publicados en el transcurso de los últimos ocho años. Un antecedente directo y emblemático es el trabajo de Perry et al.~\cite{perry2020streamlined} (2020), en el cual se desarrolló y desplegó con éxito un sistema de inspección de puentes integrando vehículos aéreos no tripulados (UAVs) y redes neuronales convolucionales sobre el puente \textit{Oxbow Bridge} en Loveland (Colorado, EE.UU.), demostrando cómo la captura aérea combinada con visión artificial reemplaza objetivamente las escalas manuales de deterioro. Asimismo, Liu et al.~\cite{liu2025crack} (2025) implementaron un esquema de inspección y cuantificación tridimensional de grietas acoplando parámetros fotogramétricos de UAVs sobre un puente en arco real con márgenes de error inferiores al 2\%, mientras que Hac{\i}efendio{\u{g}}lu y Ba{\c{s}}a{\u{g}}a~\cite{haciefendioglu2022concrete} (2022) validaron la robustez de modelos de aprendizaje profundo en superficies viales bajo condiciones ambientales heterogéneas y variaciones críticas de iluminación. Estos casos evidencian que el requerimiento operativo no sólo demanda precisión de segmentación, sino también capacidad de procesamiento en tiempo real o en dispositivos embebidos montados en drones~\cite{zhang2025accuracy}.
 
-Este trabajo aborda dicho vacío mediante la comparación de tres arquitecturas con características complementarias: UNet++ \cite{ref6}, una red encoder-decoder con conexiones densas ampliamente utilizada como referencia en segmentación de imágenes médicas y estructurales; PIDNet \cite{ref7}, diseñada específicamente para segmentación semántica en tiempo real mediante una arquitectura de tres ramas; y YOLOv11 \cite{ref8}, la iteración más reciente de la familia YOLO, reconocida por su eficiencia y adaptada en este estudio a la tarea de segmentación. La selección de estos tres modelos permite cubrir un espectro representativo de enfoques, desde arquitecturas orientadas a la máxima precisión hasta aquellas priorizadas para operar en condiciones de tiempo real.
+A pesar de la proliferación de modelos en la literatura, frecuentemente se evalúan en condiciones aisladas o con protocolos disímiles, dificultando la comparación justa entre la precisión de máscara y la latencia de inferencia. Para abordar esta problemática, este trabajo investiga comparativamente tres familias de arquitecturas complementarias:
+\begin{enumerate}
+    \item \textbf{UNet++}~\cite{zhou2018unetplusplus}: extensión de la cánonica U-Net con conexiones densas anidadas y rediseño de caminos \textit{skip}, concebida para maximizar la precisión a múltiples escalas.
+    \item \textbf{PIDNet}~\cite{xu2023pidnet}: arquitectura tri-rama (detalle, contexto y borde) inspirada en el control PID clásico, orientada específicamente a la segmentación semántica en tiempo real guiada por atención a contornos.
+    \item \textbf{YOLOv11-Seg}~\cite{kahn2024yolo11}: la versión más reciente del paradigma de detección y segmentación unificada de Ultralytics, optimizada para extrema ligereza y velocidad de cómputo.
+\end{enumerate}
 
-El objetivo de este trabajo es evaluar comparativamente el desempeño de YOLOv11, UNet++ y PIDNet en la tarea de segmentación semántica de grietas sobre el dataset DeepCrack \cite{ref9}, considerando tanto su precisión, medida mediante \textit{mean Intersection over Union} (mIoU), como su eficiencia, medida a través del tiempo de inferencia por imagen. A diferencia de estudios previos, los tres modelos se entrenan y evalúan bajo condiciones experimentales controladas y equivalentes, lo que permite una comparación directa y reproducible. Los resultados de este estudio buscan aportar criterios prácticos para la selección de modelos de segmentación en aplicaciones de monitoreo de infraestructura civil, especialmente en escenarios donde el balance entre precisión y velocidad de procesamiento es determinante.
+El objetivo principal del proyecto es realizar un análisis comparativo riguroso de estas tres arquitecturas sobre el dataset público DeepCrack~\cite{liu2019deepcrack}, evaluando tanto su capacidad de delimitación a nivel de píxel ($mIoU$, $IoU_{\text{grieta}}$ y $F1\text{-Score}$) como su rendimiento temporal (latencia en milisegundos y FPS) en un entorno de cómputo unificado (GPU NVIDIA Tesla T4). Adicionalmente, se contrastan las implicancias prácticas de su implementación para proporcionar directrices técnicas sólidas en aplicaciones reales de ingeniería civil.
 
-El resto de este artículo se organiza de la siguiente manera: la Sección II describe el dataset, el preprocesamiento y el protocolo experimental utilizado; la Sección III presenta y discute los resultados obtenidos; y la Sección IV expone las conclusiones del trabajo.
+El resto de este artículo se estructura de la siguiente manera: la Sección~II detalla la metodología, las características del dataset, el preprocesamiento, el diseño de los modelos y el protocolo experimental; la Sección~III presenta los resultados cuantitativos y cualitativos junto con la discusión crítica de hallazgos y limitaciones; y la Sección~IV expone las conclusiones finales del estudio.
 
-\subsection{Maintaining the Integrity of the Specifications}
+\section{Metodología, Diseño y Desarrollo}
 
-The IEEEtran class file is used to format your paper and style the text. All margins, 
-column widths, line spaces, and text fonts are prescribed; please do not 
-alter them. You may note peculiarities. For example, the head margin
-measures proportionately more than is customary. This measurement 
-and others are deliberate, using specifications that anticipate your paper 
-as one part of the entire proceedings, and not as an independent document. 
-Please do not revise any of the current designations.
+\subsection{Dataset DeepCrack}
+Para el entrenamiento y evaluación comparativa se utilizó el benchmark público DeepCrack~\cite{liu2019deepcrack}. Este conjunto de datos fue recopilado específicamente para la segmentación de fisuras en superficies heterogéneas de hormigón, asfalto y mampostería bajo diversas condiciones de iluminación, oclusiones y texturas complejas de fondo.
 
-\section{Prepare Your Paper Before Styling}
-Before you begin to format your paper, first write and save the content as a 
-separate text file. Complete all content and organizational editing before 
-formatting. Please note sections \ref{AA} to \ref{FAT} below for more information on 
-proofreading, spelling and grammar.
-
-Keep your text and graphic files separate until after the text has been 
-formatted and styled. Do not number text heads---{\LaTeX} will do that 
-for you.
-
-\subsection{Abbreviations and Acronyms}\label{AA}
-Define abbreviations and acronyms the first time they are used in the text, 
-even after they have been defined in the abstract. Abbreviations such as 
-IEEE, SI, MKS, CGS, ac, dc, and rms do not have to be defined. Do not use 
-abbreviations in the title or heads unless they are unavoidable.
-
-\subsection{Units}
+El dataset contiene un total de 537 imágenes en resolución nativa de $544 \times 384$ píxeles, acompañadas de sus respectivas máscaras de segmentación binaria ground-truth anotadas manualmente a nivel de píxel (clase 0: fondo/superficie, clase 1: grieta). Se adoptó la partición estándar provista por los autores originales:
 \begin{itemize}
-\item Use either SI (MKS) or CGS as primary units. (SI units are encouraged.) English units may be used as secondary units (in parentheses). An exception would be the use of English units as identifiers in trade, such as ``3.5-inch disk drive''.
-\item Avoid combining SI and CGS units, such as current in amperes and magnetic field in oersteds. This often leads to confusion because equations do not balance dimensionally. If you must use mixed units, clearly state the units for each quantity that you use in an equation.
-\item Do not mix complete spellings and abbreviations of units: ``Wb/m\textsuperscript{2}'' or ``webers per square meter'', not ``webers/m\textsuperscript{2}''. Spell out units when they appear in text: ``. . . a few henries'', not ``. . . a few H''.
-\item Use a zero before decimal points: ``0.25'', not ``.25''. Use ``cm\textsuperscript{3}'', not ``cc''.)
+    \item \textbf{Conjunto de entrenamiento (\textit{train}):} 300 pares de imágenes y máscaras.
+    \item \textbf{Conjunto de evaluación (\textit{test/val}):} 237 pares de imágenes y máscaras.
 \end{itemize}
 
-\subsection{Equations}
-Number equations consecutively. To make your 
-equations more compact, you may use the solidus (~/~), the exp function, or 
-appropriate exponents. Italicize Roman symbols for quantities and variables, 
-but not Greek symbols. Use a long dash rather than a hyphen for a minus 
-sign. Punctuate equations with commas or periods when they are part of a 
-sentence, as in:
-\begin{equation}
-a+b=\gamma\label{eq}
-\end{equation}
+El problema presenta un severo desbalance de clases típico del dominio: la clase minoritaria (grieta) ocupa en promedio menos del 4\% al 6\% de la superficie total de píxeles por imagen, presentando formas esbeltas, ramificadas y de continuidad topológica crítica. La Fig.~\ref{fig:dataset_samples} ilustra ejemplos representativos del dataset junto con la generación de mapas de contorno para la supervisión guiada.
 
-Be sure that the 
-symbols in your equation have been defined before or immediately following 
-the equation. Use ``\eqref{eq}'', not ``Eq.~\eqref{eq}'' or ``equation \eqref{eq}'', except at 
-the beginning of a sentence: ``Equation \eqref{eq} is . . .''
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{figs/img_mask_border.png}
+\caption{Muestras representativas del dataset DeepCrack~\cite{liu2019deepcrack}: imagen de entrada original (izquierda), máscara ground-truth binaria (centro) y mapa de bordes estructurales extraído mediante detector Canny (derecha) para la supervisión de contornos.}
+\label{fig:dataset_samples}
+\end{figure}
 
-\subsection{\LaTeX-Specific Advice}
+\subsection{Preprocesamiento y Aumentación de Datos}
+Dadas las diferencias intrínsecas entre los paradigmas de las arquitecturas evaluadas, las transformaciones de datos se adaptaron preservando la consistencia dimensional en la entrada:
 
-Please use ``soft'' (e.g., \verb|\eqref{Eq}|) cross references instead
-of ``hard'' references (e.g., \verb|(1)|). That will make it possible
-to combine sections, add equations, or change the order of figures or
-citations without having to go through the file line by line.
-
-Please don't use the \verb|{eqnarray}| equation environment. Use
-\verb|{align}| or \verb|{IEEEeqnarray}| instead. The \verb|{eqnarray}|
-environment leaves unsightly spaces around relation symbols.
-
-Please note that the \verb|{subequations}| environment in {\LaTeX}
-will increment the main equation counter even when there are no
-equation numbers displayed. If you forget that, you might write an
-article in which the equation numbers skip from (17) to (20), causing
-the copy editors to wonder if you've discovered a new method of
-counting.
-
-{\BibTeX} does not work by magic. It doesn't get the bibliographic
-data from thin air but from .bib files. If you use {\BibTeX} to produce a
-bibliography you must send the .bib files. 
-
-{\LaTeX} can't read your mind. If you assign the same label to a
-subsubsection and a table, you might find that Table I has been cross
-referenced as Table IV-B3. 
-
-{\LaTeX} does not have precognitive abilities. If you put a
-\verb|\label| command before the command that updates the counter it's
-supposed to be using, the label will pick up the last counter to be
-cross referenced instead. In particular, a \verb|\label| command
-should not go before the caption of a figure or a table.
-
-Do not use \verb|\nonumber| inside the \verb|{array}| environment. It
-will not stop equation numbers inside \verb|{array}| (there won't be
-any anyway) and it might stop a wanted equation number in the
-surrounding equation.
-
-\subsection{Some Common Mistakes}\label{SCM}
+\subsubsection{Pipeline de PIDNet}
+Para el entrenamiento de PIDNet se implementó una clase de transformación conjunta (\textit{JointTransform}) que garantiza la correspondencia espacial exacta entre la imagen y su etiqueta:
 \begin{itemize}
-\item The word ``data'' is plural, not singular.
-\item The subscript for the permeability of vacuum $\mu_{0}$, and other common scientific constants, is zero with subscript formatting, not a lowercase letter ``o''.
-\item In American English, commas, semicolons, periods, question and exclamation marks are located within quotation marks only when a complete thought or name is cited, such as a title or full quotation. When quotation marks are used, instead of a bold or italic typeface, to highlight a word or phrase, punctuation should appear outside of the quotation marks. A parenthetical phrase or statement at the end of a sentence is punctuated outside of the closing parenthesis (like this). (A parenthetical sentence is punctuated within the parentheses.)
-\item A graph within a graph is an ``inset'', not an ``insert''. The word alternatively is preferred to the word ``alternately'' (unless you really mean something that alternates).
-\item Do not use the word ``essentially'' to mean ``approximately'' or ``effectively''.
-\item In your paper title, if the words ``that uses'' can accurately replace the word ``using'', capitalize the ``u''; if not, keep using lower-cased.
-\item Be aware of the different meanings of the homophones ``affect'' and ``effect'', ``complement'' and ``compliment'', ``discreet'' and ``discrete'', ``principal'' and ``principle''.
-\item Do not confuse ``imply'' and ``infer''.
-\item The prefix ``non'' is not a word; it should be joined to the word it modifies, usually without a hyphen.
-\item There is no period after the ``et'' in the Latin abbreviation ``et al.''.
-\item The abbreviation ``i.e.'' means ``that is'', and the abbreviation ``e.g.'' means ``for example''.
+    \item Escalado aleatorio (\textit{random scale}) en el rango de factores $(0.5, 2.0)$.
+    \item Recorte aleatorio con relleno (\textit{random crop with padding}) a tamaño fijo de $512 \times 512$ píxeles.
+    \item Volteo horizontal y vertical aleatorio (\textit{flip}) con probabilidad $p = 0.5$.
+    \item Rotación leve en un rango de $\pm 10^{\circ}$.
+    \item Normalización de canales RGB utilizando los estadísticos de ImageNet ($\mu = [0.485, 0.456, 0.406]$, $\sigma = [0.229, 0.224, 0.225]$).
+    \item \textbf{Generación de bordes online:} sobre la máscara transformada se aplica el algoritmo de Canny para derivar dinámicamente el mapa de bordes binario utilizado por la rama de contornos del modelo.
+    \item En validación (\textit{ValTransform}): reescalado a $512 \times 512$ y normalización ImageNet sin aumentaciones estocásticas.
 \end{itemize}
-An excellent style manual for science writers is \cite{b7}.
 
-\subsection{Authors and Affiliations}\label{AAA}
-\textbf{The class file is designed for, but not limited to, six authors.} A 
-minimum of one author is required for all conference articles. Author names 
-should be listed starting from left to right and then moving down to the 
-next line. This is the author sequence that will be used in future citations 
-and by indexing services. Names should not be listed in columns nor group by 
-affiliation. Please keep your affiliations as succinct as possible (for 
-example, do not differentiate among departments of the same organization).
+\subsubsection{Pipeline de UNet++}
+% [TODO PARA AGUSTÍN - UNet++: Verificar y ajustar detalles de preprocesamiento]
+Para UNet++ se empleó un pipeline homólogo implementado en PyTorch:
+\begin{itemize}
+    \item Recorte y escalado a resolución espacial de $512 \times 512$.
+    \item Volteo horizontal aleatorio ($p = 0.5$) y variación de escala en rango $(0.5, 2.0)$.
+    \item Normalización estándar sobre ImageNet.
+\end{itemize}
 
-\subsection{Identify the Headings}\label{ITH}
-Headings, or heads, are organizational devices that guide the reader through 
-your paper. There are two types: component heads and text heads.
+\subsubsection{Pipeline de YOLOv11-Seg}
+% [TODO PARA ALAN - YOLOv11-Seg: Verificar pipeline y conversión a polígonos]
+Dado que YOLOv11 está diseñado primordialmente para segmentación de instancias mediante máscaras prototipo, se requirió un preprocesamiento ad-hoc implementado en \texttt{prepare\_data.py}:
+\begin{itemize}
+    \item Conversión de máscaras ráster a polígonos vectoriales normalizados ($[0, 1]$) extrayendo componentes conexas con área mínima ($\ge 15$ px).
+    \item Preservación estricta de vértices mediante contornos completos (\texttt{cv2.CHAIN\_APPROX\_NONE}) para evitar la degradación del espesor en grietas delgadas.
+    \item Pipeline nativo de Ultralytics configurado con tamaño de imagen $\text{imgsz} = 512$, \texttt{scale: 0.5}, \texttt{fliplr: 0.5}, y aumentaciones de color y \textit{mosaic/mixup} desactivadas para mantener la homogeneidad experimental.
+\end{itemize}
 
-Component heads identify the different components of your paper and are not 
-topically subordinate to each other. Examples include Acknowledgments and 
-References and, for these, the correct style to use is ``Heading 5''. Use 
-``figure caption'' for your Figure captions, and ``table head'' for your 
-table title. Run-in heads, such as ``Abstract'', will require you to apply a 
-style (in this case, italic) in addition to the style provided by the drop 
-down menu to differentiate the head from the text.
+\subsection{Modelos Comparados (Diseño)}
 
-Text heads organize the topics on a relational, hierarchical basis. For 
-example, the paper title is the primary text head because all subsequent 
-material relates and elaborates on this one topic. If there are two or more 
-sub-topics, the next level head (uppercase Roman numerals) should be used 
-and, conversely, if there are not at least two sub-topics, then no subheads 
-should be introduced.
+\subsubsection{PIDNet (Proportional-Integral-Derivative Network)}
+PIDNet~\cite{xu2023pidnet} es una arquitectura de segmentación en tiempo real inspirada en los controladores clásicos PID. A diferencia de las redes tradicionales de dos ramas (que suelen perder detalles finos o sufrir de sobrecalentamiento por desbalance de gradientes), PIDNet propone una estructura de tres ramas paralelas interconectadas:
+\begin{itemize}
+    \item \textbf{Rama Proporcional (I - Rama de Detalle):} opera en alta resolución para preservar detalles espaciales finos y bordes de grietas.
+    \item \textbf{Rama Integral (P - Rama de Contexto):} utiliza bloques convolucionales con agregación progresiva y gran campo receptivo para extraer información semántica global del fondo y la estructura.
+    \item \textbf{Rama Derivativa (D - Rama de Borde):} procesa mapas de gradiente y bordes de alta frecuencia, actuando como un diferenciador que resalta las transiciones espaciales abruptas.
+\end{itemize}
+La fusión de características se realiza mediante módulos de Agregación Guiada por Píxel (PAG) y Agregación Guiada Bilateral (BGA), permitiendo que la rama de bordes module directamente la decisión semántica final. Se seleccionó la variante ligera \textbf{PIDNet-S} adaptada para dos clases de salida e inicializada con pesos preentrenados en Cityscapes.
 
-\subsection{Figures and Tables}\label{FAT}
-\paragraph{Positioning Figures and Tables} Place figures and tables at the top and 
-bottom of columns. Avoid placing them in the middle of columns. Large 
-figures and tables may span across both columns. Figure captions should be 
-below the figures; table heads should appear above the tables. Insert 
-figures and tables after they are cited in the text. Use the abbreviation 
-``Fig.~\ref{fig}'', even at the beginning of a sentence.
+\subsubsection{UNet++ (Nested Dense UNet)}
+% [TODO PARA AGUSTÍN - UNet++: Validar backbone y configuración de atención]
+UNet++~\cite{zhou2018unetplusplus} rediseña la estructura clásica de U-Net sustituyendo los saltos simples (\textit{plain skip connections}) por una densa red anidada de sub-redes convolucionales interconectadas. Este diseño reduce la brecha semántica (\textit{semantic gap}) entre los mapas de características del codificador (\textit{encoder}) y el decodificador (\textit{decoder}) antes de la concatenación. En este trabajo se utilizó la librería \texttt{segmentation\_models\_pytorch}, configurando:
+\begin{itemize}
+    \item \textbf{Backbone / Codificador:} ResNet-34 preentrenado en ImageNet con una profundidad de 5 niveles jerárquicos.
+    \item \textbf{Módulos de Atención:} bloques \textit{scSE} (Spatial and Channel Squeeze \& Excitation) en el decodificador para potenciar selectivamente los canales y píxeles con presencia de grietas.
+\end{itemize}
 
-\begin{table}[htbp]
-\caption{Table Type Styles}
+\subsubsection{YOLOv11-Seg (Ultralytics)}
+% [TODO PARA ALAN - YOLOv11-Seg: Confirmar arquitectura y variantes evaluadas]
+YOLOv11~\cite{kahn2024yolo11} es el modelo más reciente de detección y segmentación de una sola etapa de Ultralytics. Su cabezal de segmentación opera en paralelo al cabezal de detección: predice $k$ coeficientes de máscara por cada caja delimitadora candidata y los combina linealmente con $k$ máscaras prototipo generadas por un módulo \textit{Proto} en la base del decodificador. Se evaluó la variante \textbf{YOLO11n-seg} (Nano) y \textbf{YOLO11s-seg} (Small), con pesos iniciales de COCO-Seg, transformando las máscaras predichas a una representación binaria global para permitir una comparación equitativa con los modelos semánticos puros.
+
+\subsection{Configuración Experimental (Desarrollo)}
+
+\subsubsection{Entorno de Cómputo}
+Todos los experimentos se ejecutaron sobre instancias de Google Colab provistas de una GPU **NVIDIA Tesla T4** (16~GB VRAM GDDR6, arquitectura Turing), CPU Intel Xeon @ 2.20~GHz y 12~GB de memoria RAM del sistema. El framework principal fue PyTorch 2.x sobre CUDA 12.x.
+
+\subsubsection{Hiperparámetros de Entrenamiento}
+La Tabla~\ref{tab:hyperparams} sintetiza los hiperparámetros de optimización adoptados por cada modelo. Las discrepancias en el número de épocas y paciencia de \textit{Early Stopping} responden a la dinámica de convergencia propia de cada arquitectura.
+
+\begin{table}[t]
+\caption{Hiperparámetros de Entrenamiento por Modelo}
+\label{tab:hyperparams}
 \begin{center}
-\begin{tabular}{|c|c|c|c|}
-\hline
-\textbf{Table}&\multicolumn{3}{|c|}{\textbf{Table Column Head}} \\
-\cline{2-4} 
-\textbf{Head} & \textbf{\textit{Table column subhead}}& \textbf{\textit{Subhead}}& \textbf{\textit{Subhead}} \\
-\hline
-copy& More table copy$^{\mathrm{a}}$& &  \\
-\hline
-\multicolumn{4}{l}{$^{\mathrm{a}}$Sample of a Table footnote.}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Parámetro} & \textbf{PIDNet-S} & \textbf{UNet++} & \textbf{YOLO11n-Seg} \\
+\midrule
+Pesos base & Cityscapes & ImageNet & COCO-Seg \\
+Optimizador & SGD (PolyLR) & SGD / Adam & SGD / AdamW \\
+Learning rate base & $1 \times 10^{-3}$ & $1 \times 10^{-3}$ & $1 \times 10^{-2}$ \\
+Momentum & 0.9 & 0.9 & 0.937 \\
+Weight Decay & $5 \times 10^{-4}$ & $1 \times 10^{-4}$ & $5 \times 10^{-4}$ \\
+Batch size & 8 & 8 & 8 \\
+Resolución entrada & $512 \times 512$ & $512 \times 512$ & $512 \times 512$ \\
+épocas máximas & 50 & 100 & 200 \\
+Paciencia (\textit{Early stop}) & 10 & 10 & 30 \\
+época de convergencia & 29 (stop: 41) & 15 & $\approx 60$ \\
+\bottomrule
 \end{tabular}
-\label{tab1}
 \end{center}
 \end{table}
 
-\begin{figure}[htbp]
-\centerline{\includegraphics{fig1.png}}
-\caption{Example of a figure caption.}
-\label{fig}
+\subsubsection{Funciones de Pérdida}
+Para compensar el marcado desbalance de píxeles, cada arquitectura empleó formulaciones orientadas a la tarea:
+
+\textbf{1) PIDNet:} empleó la función compuesta \textit{BoundaryAwareCrossEntropy} que integra la pérdida semántica clásica $\mathcal{L}_{\text{CE}}$, la pérdida de contornos $\mathcal{L}_{\text{BD}}$ (Binary Cross-Entropy ponderada sobre los bordes generados por Canny) y una pérdida de consistencia semántica de borde $\mathcal{L}_{\text{SB}}$:
+\begin{equation}
+\mathcal{L}_{\text{total}}^{\text{PIDNet}} = \lambda_0 \mathcal{L}_{\text{CE}} + \lambda_1 \mathcal{L}_{\text{BD}} + \lambda_2 \mathcal{L}_{\text{SB}}
+\label{eq:pidnet_loss}
+\end{equation}
+
+\textbf{2) UNet++:} implementó una combinación simétrica de \textit{Binary Cross-Entropy with Logits} y \textit{Dice Loss}:
+\begin{equation}
+\mathcal{L}_{\text{total}}^{\text{UNet++}} = \mathcal{L}_{\text{BCE}}(y, \hat{y}) + \mathcal{L}_{\text{Dice}}(y, \hat{y})
+\label{eq:unet_loss}
+\end{equation}
+donde $\mathcal{L}_{\text{Dice}} = 1 - \frac{2 \sum y \hat{y} + \epsilon}{\sum y + \sum \hat{y} + \epsilon}$, penalizando fuertemente la pérdida de continuidad en la clase minoritaria.
+
+\textbf{3) YOLOv11-Seg:} empleó la pérdida multi-tarea nativa de Ultralytics, compuesta por la pérdida de caja (\textit{CIoU / DFL}), clasificación y la pérdida de máscara a nivel de píxel basada en \textit{BCE}:
+\begin{equation}
+\mathcal{L}_{\text{total}}^{\text{YOLO}} = \alpha \mathcal{L}_{\text{box}} + \beta \mathcal{L}_{\text{cls}} + \gamma \mathcal{L}_{\text{dfl}} + \delta \mathcal{L}_{\text{seg}}
+\label{eq:yolo_loss}
+\end{equation}
+
+\subsubsection{Métricas de Evaluación}
+Las predicciones continuas se binarizaron con un umbral estándar $\tau = 0.5$ (o umbral óptimo de confianza en YOLO). Las métricas formales computadas sobre el conjunto de test son:
+
+\textbf{Intersection over Union de Grieta ($IoU_{\text{grieta}}$):} mide el solapamiento estricto sobre la clase positiva de interés estructural:
+\begin{equation}
+IoU_{\text{grieta}} = \frac{TP}{TP + FP + FN}
+\label{eq:iou_crack}
+\end{equation}
+donde $TP$, $FP$ y $FN$ representan los píxeles verdaderos positivos, falsos positivos y falsos negativos, respectivamente.
+
+\textbf{Mean Intersection over Union ($mIoU$ 2 clases):} media aritmética del $IoU$ de la clase fondo ($IoU_{\text{fondo}}$) y la clase grieta:
+\begin{equation}
+mIoU = \frac{IoU_{\text{fondo}} + IoU_{\text{grieta}}}{2}
+\label{eq:miou}
+\end{equation}
+
+\textbf{F1-Score / Dice Coefficient:} media armónica entre la precisión y el exhaustividad (\textit{recall}):
+\begin{equation}
+F1 = \frac{2 \cdot TP}{2 \cdot TP + FP + FN} = \frac{2 \cdot \text{Precision} \cdot \text{Recall}}{\text{Precision} + \text{Recall}}
+\label{eq:f1}
+\end{equation}
+
+\textbf{Eficiencia computacional:} se evaluó la latencia promedio por imagen en milisegundos ($ms$) con \textit{batch size} unitario ($BS = 1$), realizando pasadas de calentamiento (\textit{warmup}) y sincronización de GPU (\texttt{torch.cuda.synchronize()}), reportando además el rendimiento en cuadros por segundo ($\text{FPS} = 1000 / \text{latencia}$).
+
+\section{Resultados Experimentales y Análisis de Resultados}
+
+\subsection{Comparación Cuantitativa}
+Los resultados cuantitativos obtenidos sobre el conjunto de evaluación de DeepCrack (237 imágenes de test) se consolidan en la Tabla~\ref{tab:results_comparison}.
+
+\begin{table*}[t]
+\caption{Comparación Cuantitativa de Desempeño en Segmentación y Eficiencia Computacional sobre DeepCrack (GPU NVIDIA Tesla T4)}
+\label{tab:results_comparison}
+\begin{center}
+\begin{tabular}{lcccccccc}
+\toprule
+\textbf{Modelo} & \textbf{Backbone / Variante} & \textbf{$mIoU_{\text{2c}}$} & \textbf{$IoU_{\text{grieta}}$} & \textbf{$F1\text{-Score}$} & \textbf{Precision} & \textbf{Recall} & \textbf{Latencia (ms)} & \textbf{FPS} \\
+\midrule
+\textbf{UNet++} & ResNet-34 + scSE (5 capas) & \textbf{0.8588} & \textbf{0.7314} & \textbf{0.8449} & 0.8504 & \textbf{0.8394} & $\approx 112.5$ & $\approx 8.9$ \\
+UNet++ & ResNet-34 (5 capas, base) & 0.8524 & 0.7187 & 0.8363 & \textbf{0.8828} & 0.7945 & $\approx 105.0$ & $\approx 9.5$ \\
+UNet++ & EfficientNet-B0 (5 capas) & 0.8584 & 0.7306 & 0.8444 & 0.8584 & 0.8307 & $\approx 98.0$ & $\approx 10.2$ \\
+\midrule
+\textbf{PIDNet-S} & 3-Ramas (Detalle/Contexto/Borde) & 0.8246 & 0.6660 & 0.7995 & 0.8320 & 0.7690 & \textbf{58.67} & \textbf{17.04} \\
+\midrule
+\textbf{YOLO11s-Seg} & Small ($\text{imgsz}=512$) & 0.8295 & 0.6756 & 0.8064 & 0.8150 & 0.7980 & $\approx 22.0$ & $\approx 45.4$ \\
+\textbf{YOLO11n-Seg} & Nano ($\text{imgsz}=512$) & 0.8259 & 0.6686 & 0.8014 & 0.8020 & 0.8010 & $\approx 14.5$ & $\approx 68.9$ \\
+YOLO11n-Seg* & Nano Hi-Res ($\text{imgsz}=768$) & 0.8438 & 0.7026 & 0.8253 & 0.8310 & 0.8197 & $\approx 28.0$ & $\approx 35.7$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+\vspace{1ex}
+\footnotesize{\textit{Nota:} (*) YOLO11n-Seg a $768\times 768$ se incluye como referencia de mejora por resolución espacial fuera de la comparativa estricta a $512\times 512$.}
+\end{table*}
+
+Del análisis cuantitativo se desprenden los siguientes aspectos fundamentales:
+\begin{enumerate}
+    \item \textbf{Liderazgo en fidelidad de segmentación:} UNet++ con codificador ResNet-34 y atención scSE alcanzó el mayor desempeño global con un $IoU_{\text{grieta}}$ de $0.7314$ y un $F1\text{-Score}$ de $0.8449$, superando a las demás arquitecturas en capacidad de delinear bifurcaciones y grietas complejas.
+    \item \textbf{Eficacia del diseño tri-rama de PIDNet:} PIDNet-S alcanzó un sólido $IoU_{\text{grieta}}$ de $0.6660$ ($mIoU = 0.8246$) con una tasa de $17.04$~FPS en inferencia nativa en PyTorch. La curva de convergencia (Fig.~\ref{fig:pidnet_curves}) demuestra una estabilización óptima alrededor de la época 29, donde la pérdida de borde guía efectivamente la delimitación sin provocar sobreajuste temprano.
+    \item \textbf{Comportamiento de la familia YOLOv11:} YOLO11s-Seg y YOLO11n-Seg obtuvieron un $IoU_{\text{grieta}}$ de $0.6756$ y $0.6686$ respectivamente. Al elevar la resolución a $768\times 768$ (YOLO11n Hi-Res), el $IoU_{\text{grieta}}$ ascendió notablemente a $0.7026$, confirmando que la limitación principal en modelos basados en \textit{anchor-free/prototipos} sobre fisuras delgadas radica en la resolución espacial de los mapas de características.
+\end{enumerate}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{figs/loss_iou.png}
+\caption{Curvas de evolución del entrenamiento de PIDNet-S sobre DeepCrack: (a) pérdida en entrenamiento y validación, (b) evolución de $mIoU$ global, y (c) progreso del $IoU$ y $F1\text{-Score}$ específico de la clase grieta en validación.}
+\label{fig:pidnet_curves}
 \end{figure}
 
-Figure Labels: Use 8 point Times New Roman for Figure labels. Use words 
-rather than symbols or abbreviations when writing Figure axis labels to 
-avoid confusing the reader. As an example, write the quantity 
-``Magnetization'', or ``Magnetization, M'', not just ``M''. If including 
-units in the label, present them within parentheses. Do not label axes only 
-with units. In the example, write ``Magnetization (A/m)'' or ``Magnetization 
-\{A[m(1)]\}'', not just ``A/m''. Do not label axes with a ratio of 
-quantities and units. For example, write ``Temperature (K)'', not 
-``Temperature/K''.
+\subsection{Comparación Cualitativa}
+La evaluación visual de las máscaras predichas revela diferencias marcadas en la morfología de los resultados:
+\begin{itemize}
+    \item \textbf{Grietas capilares ultrafinas:} UNet++ y PIDNet logran mantener una mejor conectividad estructural. La rama de borde dedicada de PIDNet evita la desconexión de líneas en zonas de bajo contraste con el hormigón.
+    \item \textbf{Bordes y suavizado:} YOLOv11-Seg genera contornos más suaves debido a la combinación lineal de prototipos de máscara, lo que en fisuras de trayectoria errática puede derivar en un ligero engrosamiento o pérdida de extremos muy delgados, si bien elimina eficazmente falsos positivos aislados provocados por manchas o sombras en la superficie.
+\end{itemize}
 
-\section*{Acknowledgment}
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{figs/semantic_samples_final.png}
+\caption{Muestras de evaluación cualitativa sobre el conjunto de prueba de DeepCrack: imagen original, máscara ground-truth y predicciones segmentadas.}
+\label{fig:qualitative_samples}
+\end{figure}
 
-The preferred spelling of the word ``acknowledgment'' in America is without 
-an ``e'' after the ``g''. Avoid the stilted expression ``one of us (R. B. 
-G.) thanks $\ldots$''. Instead, try ``R. B. G. thanks$\ldots$''. Put sponsor 
-acknowledgments in the unnumbered footnote on the first page.
+\subsection{Discusión y Limitaciones Metodológicas}
 
-\section*{References}
+\subsubsection{Compromiso Precisión vs. Eficiencia (\textit{Trade-off})}
+Los resultados validan la existencia de un claro compromiso ingenieril entre costo computacional y fidelidad pixel-wise:
+\begin{itemize}
+    \item Si el objetivo es la **auditoría estructural \textit{offline} de alta precisión**, donde la exactitud métrica del ancho de grieta es prioritaria y no existen restricciones de tiempo, **UNet++ con atención scSE** representa la opción superior ($IoU_{\text{grieta}} = 0.7314$).
+    \item Si el despliegue requiere **monitoreo dinámico en tiempo real** montado en drones (UAVs) o vehículos de inspección con hardware restringido, **PIDNet-S** y **YOLO11-Seg** ofrecen la mejor solución de compromiso, procesando secuencias de video a más de $17-45$~FPS con una pérdida de $IoU$ de apenas 5 a 6 puntos porcentuales respecto a UNet++.
+\end{itemize}
 
-Please number citations consecutively within brackets \cite{b1}. The 
-sentence punctuation follows the bracket \cite{b2}. Refer simply to the reference 
-number, as in \cite{b3}---do not use ``Ref. \cite{b3}'' or ``reference \cite{b3}'' except at 
-the beginning of a sentence: ``Reference \cite{b3} was the first $\ldots$''
+\subsubsection{Análisis Crítico de Limitaciones Experimentales}
+En consonancia con las pautas de rigor metodológico, es fundamental declarar explícitamente las limitaciones y divergencias técnicas derivadas del trabajo descentralizado del equipo:
+\begin{itemize}
+    \item \textbf{Diferencias de preprocesamiento y representación:} mientras PIDNet y UNet++ operaron directamente sobre máscaras ráster pixel-wise, YOLOv11 requirió vectorizar componentes conexas a polígonos. Esta transformación introduce un techo teórico intrínseco en la representación geométrica de pequeños vértices.
+    \item \textbf{Estrategias de optimización heterogéneas:} cada modelo convergió bajo esquemas de épocas ($50$ en PIDNet, $100$ en UNet++, $200$ en YOLO) y combinaciones de pérdidas disímiles (Boundary CE vs. BCE+Dice vs. YOLO native loss). Si bien esto optimizó el rendimiento individual de cada arquitectura, introduce factores de confusión que impiden aislar estrictamente el impacto exclusivo de la topología de la red.
+    \item \textbf{Tamaño del dataset:} con 300 imágenes de entrenamiento, la generalización a escenarios con suciedad extrema o artefactos climáticos fuera del dominio de DeepCrack constituye un desafío a validar en trabajos futuros.
+\end{itemize}
 
-Number footnotes separately in superscripts. Place the actual footnote at 
-the bottom of the column in which it was cited. Do not put footnotes in the 
-abstract or reference list. Use letters for table footnotes.
+\section{Conclusiones Finales}
 
-Unless there are six authors or more give all authors' names; do not use 
-``et al.''. Papers that have not been published, even if they have been 
-submitted for publication, should be cited as ``unpublished'' \cite{b4}. Papers 
-that have been accepted for publication should be cited as ``in press'' \cite{b5}. 
-Capitalize only the first word in a paper title, except for proper nouns and 
-element symbols.
+A partir de la experimentación, análisis cuantitativo y evaluación comparativa de los tres modelos de segmentación semántica sobre el dataset DeepCrack, se derivan las siguientes cinco conclusiones principales:
 
-For papers published in translation journals, please give the English 
-citation first, followed by the original foreign-language citation \cite{b6}.
+\begin{enumerate}
+    \item \textbf{Fidelidad de segmentación semántica:} UNet++ con codificador ResNet-34 y bloques de atención espacial y de canal (scSE) demostró el desempeño más alto en precisión a nivel de píxel ($IoU_{\text{grieta}} = 0.7314$, $mIoU = 0.8588$), confirmando la superioridad de las conexiones densas anidadas para preservar la continuidad en fisuras estructurales complejas.
+    \item \textbf{Viabilidad operativa en tiempo real:} PIDNet-S y YOLO11-Seg probaron ser alternativas altamente eficientes para procesamiento en tiempo real, alcanzando tasas de $17.04$~FPS y hasta $>45$~FPS respectivamente sobre GPU NVIDIA T4, lo que habilita su despliegue directo en flujos de video continuo.
+    \item \textbf{Eficacia de la supervisión de contornos (PIDNet):} La incorporación de una rama derivativa de bordes explícita modulada mediante pérdida \textit{Boundary-Aware} permitió a PIDNet alcanzar un $IoU_{\text{grieta}}$ de $0.6660$ con una reducción del 48\% en la latencia respecto a UNet++, evidenciando la efectividad de guiar la segmentación de estructuras delgadas mediante información de alta frecuencia.
+    \item \textbf{Criterios de selección para ingeniería civil:} Se establece una pauta de selección clara según el caso de uso: UNet++ se consolida como el modelo óptimo para inspecciones estáticas y auditorías forenses de alta precisión (\textit{offline}), mientras que PIDNet y YOLOv11 son los modelos indicados para inspecciones dinámicas y patrullajes autónomos mediante drones (UAVs) o vehículos terrestres.
+    \item \textbf{Lecciones metodológicas y trabajo futuro:} El estudio demostró la importancia crítica de unificar formatos de entrada y criterios de evaluación. Como trabajo futuro, se proyecta integrar técnicas de cuantificación métrica del ancho de grieta en milímetros combinando la segmentación con parámetros de cámara UAV~\cite{liu2025crack}, así como la cuantización a FP16/INT8 mediante TensorRT para su implementación en dispositivos embebidos de bajo consumo (e.g., NVIDIA Jetson).
+\end{enumerate}
 
 \begin{thebibliography}{00}
-\bibitem{b1} G. Eason, B. Noble, and I. N. Sneddon, ``On certain integrals of Lipschitz-Hankel type involving products of Bessel functions,'' Phil. Trans. Roy. Soc. London, vol. A247, pp. 529--551, April 1955.
-\bibitem{b2} J. Clerk Maxwell, A Treatise on Electricity and Magnetism, 3rd ed., vol. 2. Oxford: Clarendon, 1892, pp.68--73.
-\bibitem{b3} I. S. Jacobs and C. P. Bean, ``Fine particles, thin films and exchange anisotropy,'' in Magnetism, vol. III, G. T. Rado and H. Suhl, Eds. New York: Academic, 1963, pp. 271--350.
-\bibitem{b4} K. Elissa, ``Title of paper if known,'' unpublished.
-\bibitem{b5} R. Nicole, ``Title of paper with only first word capitalized,'' J. Name Stand. Abbrev., in press.
-\bibitem{b6} Y. Yorozu, M. Hirano, K. Oka, and Y. Tagawa, ``Electron spectroscopy studies on magneto-optical media and plastic substrate interface,'' IEEE Transl. J. Magn. Japan, vol. 2, pp. 740--741, August 1987 [Digests 9th Annual Conf. Magnetics Japan, p. 301, 1982].
-\bibitem{b7} M. Young, The Technical Writer's Handbook. Mill Valley, CA: University Science, 1989.
-\bibitem{b8} D. P. Kingma and M. Welling, ``Auto-encoding variational Bayes,'' 2013, arXiv:1312.6114. [Online]. Available: https://arxiv.org/abs/1312.6114
-\bibitem{b9} S. Liu, ``Wi-Fi Energy Detection Testbed (12MTC),'' 2023, gitHub repository. [Online]. Available: https://github.com/liustone99/Wi-Fi-Energy-Detection-Testbed-12MTC
-\bibitem{b10} ``Treatment episode data set: discharges (TEDS-D): concatenated, 2006 to 2009.'' U.S. Department of Health and Human Services, Substance Abuse and Mental Health Services Administration, Office of Applied Studies, August, 2013, DOI:10.3886/ICPSR30122.v2
-\bibitem{b11} K. Eves and J. Valasek, ``Adaptive control for singularly perturbed systems examples,'' Code Ocean, Aug. 2023. [Online]. Available: https://codeocean.com/capsule/4989235/tree
+\bibitem{kaveh2024recent} A. Kaveh and M. Alhajj, ``Recent advances in crack detection technologies for structures,'' \emph{Frontiers in Built Environment}, vol. 10, p. 1321634, 2024.
+\bibitem{perry2020streamlined} B. J. Perry, Y. Guo, R. Atadero, and J. W. van de Lindt, ``Streamlined bridge inspection system utilizing unmanned aerial vehicles (UAVs) and machine learning,'' \emph{Measurement}, vol. 164, p. 108048, 2020.
+\bibitem{liu2025crack} Z.-L. Liu, A. Zhou, X.-R. Ran, Y.-P. Wu, W.-G. Zhao, and H. Zhang, ``A crack detection and quantification method using matched filter and photograph reconstruction,'' \emph{Scientific Reports}, vol. 15, no. 1, p. 25266, 2025.
+\bibitem{haciefendioglu2022concrete} K. Hac{\i}efendio{\u{g}}lu and H. B. Ba{\c{s}}a{\u{g}}a, ``Concrete road crack detection using deep learning-based Faster R-CNN method,'' \emph{Iranian Journal of Science and Technology, Transactions of Civil Engineering}, vol. 46, no. 2, pp. 1025--1036, 2022.
+\bibitem{zhang2025accuracy} J. Zhang, Z. V. Beliaeva, and Y. Huang, ``Accuracy--efficiency trade-off: Optimizing YOLOv8 for structural crack detection,'' \emph{Sensors}, vol. 25, no. 13, p. 3873, 2025.
+\bibitem{liu2019deepcrack} Y. Liu, J. Yao, X. Lu, R. Xie, and L. Li, ``DeepCrack: A deep hierarchical feature learning architecture for crack segmentation,'' \emph{Neurocomputing}, vol. 338, pp. 139--153, 2019.
+\bibitem{zhou2018unetplusplus} Z. Zhou, M. M. R. Siddiquee, N. Tajbakhsh, and J. Liang, ``UNet++: A nested U-Net architecture for medical image segmentation,'' in \emph{Deep Learning in Medical Image Analysis and Multimodal Learning for Clinical Decision Support}, Springer, 2018, pp. 3--11.
+\bibitem{xu2023pidnet} J. Xu, Z. Xiong, and S. P. Bhattacharyya, ``PIDNet: A real-time semantic segmentation network inspired by PID controllers,'' in \emph{Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV)}, 2023, pp. 19529--19539.
+\bibitem{kahn2024yolo11} G. Jocher, A. Chaurasia, and J. Qiu, ``Ultralytics YOLO11,'' 2024. [Online]. Available: \url{https://github.com/ultralytics/ultralytics}
+\bibitem{hu2019topology} C. Hu, D. Peng, P. Guan, et al., ``Topology-preserving deep image segmentation,'' in \emph{Advances in Neural Information Processing Systems (NeurIPS)}, vol. 32, 2019.
+\bibitem{wang2024pavement} Y. Wang, et al., ``Pavement fatigue crack detection and severity classification based on convolutional neural network,'' \emph{arXiv preprint arXiv:2407.16021}, 2024.
 \end{thebibliography}
-
-\vspace{12pt}
-\color{red}
-IEEE conference templates contain guidance text for composing and formatting conference papers. Please ensure that all template text is removed from your conference paper prior to submission to the conference. Failure to remove the template text from your paper may result in your paper not being published.
 
 \end{document}
