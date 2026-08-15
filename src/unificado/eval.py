@@ -71,13 +71,15 @@ def main():
         imgsz = cfg.get('imgsz', 512)
 
         def predict_yolo(img_path, conf=0.10):
-            result = model.predict(str(img_path), conf=conf, imgsz=imgsz, verbose=False)[0]
+            result = model.predict(str(img_path), conf=conf, imgsz=imgsz, retina_masks=True, verbose=False)[0]
             h, w = result.orig_shape
             semantic = np.zeros((h, w), dtype=bool)
             if result.masks is not None:
                 for m in result.masks.data.cpu().numpy():
-                    m_resized = cv2.resize(np.squeeze(m), (w, h), interpolation=cv2.INTER_NEAREST)
-                    semantic |= m_resized > 0.5
+                    m = np.squeeze(m)
+                    if m.shape != (h, w):
+                        m = cv2.resize(m, (w, h), interpolation=cv2.INTER_NEAREST)
+                    semantic |= m > 0.5
             return semantic
 
         predict_fn = lambda img, conf=args.conf: predict_yolo(img, conf)

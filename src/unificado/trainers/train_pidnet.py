@@ -5,7 +5,7 @@ import torch.optim as optim
 from torch.optim.lr_scheduler import LambdaLR
 from torch.utils.data import DataLoader
 
-from src.unificado.data.datasets import DeepCrackDataset, JointTransform
+from src.unificado.data.datasets import DeepCrackDataset, JointTransform, ValTransform
 from src.unificado.utils.pidnet_losses import get_pidnet_losses
 from src.unificado.models.pidnet_model import build_custom_pidnet
 
@@ -89,11 +89,13 @@ def train_pidnet(cfg):
         crop_size=cfg.get('crop_size', [512, 512]), 
         hflip_p=cfg.get('hflip_p', 0.5)
     )
+
+    val_transform = ValTransform()
     
     train_dataset = DeepCrackDataset(root_dir=cfg['dataset_path'], split='train', transform=train_transform)
     train_loader = DataLoader(train_dataset, batch_size=cfg['batch_size'], shuffle=True, num_workers=cfg['num_workers'], drop_last=True)
     
-    val_dataset = DeepCrackDataset(root_dir=cfg['dataset_path'], split='test', transform=None)
+    val_dataset = DeepCrackDataset(root_dir=cfg['dataset_path'], split='test', transform=val_transform)
     val_loader = DataLoader(val_dataset, batch_size=cfg['batch_size'], shuffle=False, num_workers=cfg['num_workers'])
 
     # Modelo

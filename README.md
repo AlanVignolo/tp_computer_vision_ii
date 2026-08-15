@@ -92,3 +92,26 @@ uv run python src/unificado/eval.py \
     --weights runs/yolo_seg/yolo11n_seg_nano/weights/best.pt \
     --conf 0.10
 ```
+
+### 4. Inferencia en Video (`infer_video.py`)
+
+Para aplicar la segmentación a un archivo de video y visualizar los resultados con las grietas resaltadas, se utiliza el script de inferencia unificada. Al finalizar, reportará la cantidad total de frames procesados, el tiempo transcurrido y la velocidad media en FPS.
+
+**Ejemplo (PIDNet):**
+```bash
+uv run python src/unificado/infer_video.py \
+    --config configs/pidnet.yaml \
+    --weights runs/pidnet/best_pidnet_S.pth \
+    --input datasets/videos/video_cracks.mp4 \
+    --output datasets/videos/video_cracks_pidnet.mp4
+```
+
+**Ejemplo (YOLO-Seg):**
+```bash
+uv run python src/unificado/infer_video.py \
+    --config configs/yolo_seg.yaml \
+    --weights runs/yolo_seg/yolo11n_seg_nano/weights/best.pt \
+    --input datasets/videos/video_cracks.mp4 \
+    --output datasets/videos/video_cracks_yolo.mp4 \
+    --conf 0.25
+```

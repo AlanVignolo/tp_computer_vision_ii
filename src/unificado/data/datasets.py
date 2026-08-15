@@ -61,6 +61,29 @@ class JointTransform:
         return torch.from_numpy(image).permute(2, 0, 1).float()
 
 
+class ValTransform:
+    """
+    Transformación para validación: redimensionado determinista y normalización ImageNet.
+    """
+    def __init__(self, target_size=(512, 512), mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)):
+        self.target_size = target_size
+        self.mean = np.array(mean, dtype=np.float32)
+        self.std  = np.array(std,  dtype=np.float32)
+
+    def __call__(self, image, mask):
+        # image: HxWx3 uint8 RGB ; mask: HxW uint8 (0/1)
+        if self.target_size is not None:
+            # cv2.resize espera (width, height)
+            image = cv2.resize(image, (self.target_size[1], self.target_size[0]), interpolation=cv2.INTER_LINEAR)
+            mask = cv2.resize(mask, (self.target_size[1], self.target_size[0]), interpolation=cv2.INTER_NEAREST)
+        return image, mask
+
+    def normalize_and_to_tensor(self, image):
+        image = image.astype(np.float32) / 255.0
+        image = (image - self.mean) / self.std
+        return torch.from_numpy(image).permute(2, 0, 1).float()
+
+
 class DeepCrackDataset(Dataset):
     def __init__(self, root_dir, split='train', transform=None, target_size=(512, 512)):
         """
