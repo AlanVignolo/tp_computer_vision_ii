@@ -1,0 +1,25 @@
+model_type: yolo_seg
+model_name: yolo11n-seg.pt
+
+# Rutas
+dataset_path: ../../datasets/dataset_1000
+runs_dir: runs/yolo_seg
+run_name: yolo11n_seg_nano
+
+# Entrenamiento
+epochs: 200
+patience: 30
+imgsz: 512
+batch_size: 8
+seed: 42
+
+# Aumentos (YOLO native)
+scale: 0.5
+fliplr: 0.5
+degrees: 0.0
+flipud: 0.0
+hsv_h: 0.0
+hsv_s: 0.0
+hsv_v: 0.0
+mixup: 0.0
+copy_paste: 0.0

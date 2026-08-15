@@ -1,0 +1,21 @@
+model_type: pidnet
+variant: S
+num_classes: 2
+
+# Rutas
+dataset_path: ../../datasets/dataset_1000
+pretrained_path: src/pidnet/pretrained_models/PIDNet_S_Cityscapes_test.pt
+
+# Entrenamiento
+epochs: 50
+batch_size: 8
+num_workers: 2
+learning_rate: 0.001
+momentum: 0.9
+weight_decay: 0.0005
+patience: 10
+
+# Transformaciones
+crop_size: [512, 512]
+scale_limit: [0.5, 2.0]
+hflip_p: 0.5
