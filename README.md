@@ -17,31 +17,8 @@ uv sync            # crea el .venv e instala dependencias desde uv.lock
 
 ## Datasets
 
-Los datasets **no se versionan en el repo** (~790 MB, ~21k archivos). Se descargan con
+Los datasets **no se versionan en el repo** (~112 MB, ~1k archivos). Se descargan con
 `src/download_data.py`, que es idempotente (no re-descarga si ya están preparados).
-
-### Detección — `dataset_9000_yolo` (Roboflow)
-
-9.947 imágenes (640×640) con 29.791 grietas anotadas, split train/valid/test, una única
-clase `crack`. Fuente:
-[Roboflow](https://universe.roboflow.com/alan-vignolo/crack-detection-katdf-actsg)
-(CC BY 4.0).
-
-> **Nota de preprocesamiento.** La exportación de Roboflow escribe las anotaciones como
-> polígonos, aunque las grietas están anotadas como cajas rectangulares. El script
-> convierte esos polígonos a *bounding boxes* (min/max de coordenadas), recuperando las
-> 29.791 anotaciones sin pérdida de información.
-
-Requiere una API key de Roboflow (Settings → API Keys), pasada como variable de entorno:
-
-```bash
-# PowerShell
-$env:ROBOFLOW_API_KEY = "tu_key"
-# Linux / Mac
-export ROBOFLOW_API_KEY=tu_key
-
-uv run python src/download_data.py --det
-```
 
 ### Segmentación — `dataset_1000` (DeepCrack)
 
@@ -80,7 +57,7 @@ El entrenamiento y la evaluación se manejan mediante archivos de configuración
 
 ### 1. Pesos Preentrenados
 
-- **PIDNet**: Descarga los pesos `PIDNet_S_Cityscapes_test.pt` desde el repositorio original y colócalos en `src/pidnet/pretrained_models/`.
+- **PIDNet**: Descarga los pesos `PIDNet_S_Cityscapes_test.pt` desde el [repositorio original](https://drive.google.com/drive/folders/0BySIOtxxULinfjlGdGFiT3NQVUdLVDBxWnhhTjB4VXNBRkFOa281WHlkektYY2VBcWVZb1k?resourcekey=0-w0JIXUekD-FCW-Rm1Z-HfQ) y colócalos en `src/pidnet/pretrained_models/`. 
 - **YOLOv11**: Los pesos base (`yolo11n-seg.pt`) se descargarán automáticamente la primera vez que inicies un entrenamiento.
 
 ### 2. Entrenamiento (`train.py`)
