@@ -36,7 +36,7 @@ abiancardi@fi.uba.ar}
 \IEEEauthorblockA{\textit{Facultad de Ingeniería} \\
 \textit{Universidad de Buenos Aires (FIUBA)}\\
 Buenos Aires, Argentina \\
-alan.vignolo@gmail.com}
+alanvignolo1999@gmail.com}
 }
 
 \maketitle
@@ -113,13 +113,21 @@ Para UNet++ se empleó un pipeline homólogo implementado en PyTorch:
 \end{itemize}
 
 \subsubsection{Pipeline de YOLOv11-Seg}
-% [TODO PARA ALAN - YOLOv11-Seg: Verificar pipeline y conversión a polígonos]
 Dado que YOLOv11 está diseñado primordialmente para segmentación de instancias mediante máscaras prototipo, se requirió un preprocesamiento ad-hoc implementado en \texttt{prepare\_data.py}:
 \begin{itemize}
     \item Conversión de máscaras ráster a polígonos vectoriales normalizados ($[0, 1]$) extrayendo componentes conexas con área mínima ($\ge 15$ px).
     \item Preservación estricta de vértices mediante contornos completos (\texttt{cv2.CHAIN\_APPROX\_NONE}) para evitar la degradación del espesor en grietas delgadas.
     \item Pipeline nativo de Ultralytics configurado con tamaño de imagen $\text{imgsz} = 512$, \texttt{scale: 0.5}, \texttt{fliplr: 0.5}, y aumentaciones de color y \textit{mosaic/mixup} desactivadas para mantener la homogeneidad experimental.
 \end{itemize}
+
+La conversión de máscara a polígono impone un techo de $IoU$ intrínseco: aun un modelo perfecto que reprodujera exactamente las etiquetas poligonales no alcanzaría el $IoU=1$ respecto de la máscara ráster original. La Fig.~\ref{fig:yolo_ceiling} cuantifica este efecto sobre el conjunto de test: la simplificación de contornos (\texttt{approxPolyDP}) reduce el techo a $0.88$, mientras que conservar todos los vértices lo eleva a $0.98$. Por ello se adoptó la conversión sin simplificar.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.9\columnwidth]{figs/yolo/label_ceiling_comparison.png}
+\caption{Techo de $IoU$ de la conversión máscara$\rightarrow$polígono en YOLO-Seg: máscara ground-truth (izquierda), reconstrucción con contornos simplificados (centro) y con contornos completos (derecha). La simplificación degrada el espesor de las grietas finas.}
+\label{fig:yolo_ceiling}
+\end{figure}
 
 \subsection{Modelos Comparados (Diseño)}
 
@@ -240,9 +248,9 @@ UNet++ & EfficientNet-B0 (5 capas) & 0.8584 & 0.7306 & 0.8444 & 0.8584 & 0.8307 
 \midrule
 \textbf{PIDNet-S} & 3-Ramas (Detalle/Contexto/Borde) & 0.8246 & 0.6660 & 0.7995 & 0.8320 & 0.7690 & \textbf{11.62} & \textbf{86.06} \\
 \midrule
-\textbf{YOLO11s-Seg} & Small ($\text{imgsz}=512$) & 0.8295 & 0.6756 & 0.8064 & 0.8150 & 0.7980 & $\approx 22.00$ & $\approx 45.45$ \\
-\textbf{YOLO11n-Seg} & Nano ($\text{imgsz}=512$) & 0.8259 & 0.6686 & 0.8014 & 0.8020 & 0.8010 & $\approx 14.50$ & $\approx 68.96$ \\
-YOLO11n-Seg* & Nano Hi-Res ($\text{imgsz}=768$) & 0.8438 & 0.7026 & 0.8253 & 0.8310 & 0.8197 & $\approx 28.00$ & $\approx 35.71$ \\
+\textbf{YOLO11s-Seg} & Small ($\text{imgsz}=512$) & 0.8295 & 0.6756 & 0.8064 & 0.8450 & 0.7711 & $\approx 22.00$ & $\approx 45.45$ \\
+\textbf{YOLO11n-Seg} & Nano ($\text{imgsz}=512$) & 0.8259 & 0.6686 & 0.8014 & 0.8526 & 0.7560 & $\approx 14.50$ & $\approx 68.96$ \\
+YOLO11n-Seg* & Nano Hi-Res ($\text{imgsz}=768$) & 0.8438 & 0.7026 & 0.8254 & 0.8580 & 0.7951 & $\approx 28.00$ & $\approx 35.71$ \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -274,9 +282,24 @@ La evaluación visual de las máscaras predichas revela diferencias marcadas en 
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.9\columnwidth]{figs/pidnet/seg_samples_s_cropped.png}
-\caption{Muestras de evaluación cualitativa sobre el conjunto de prueba de DeepCrack: imagen original, máscara ground-truth y predicciones segmentadas.}
-\label{fig:qualitative_samples}
+\caption{Evaluación cualitativa de \textbf{PIDNet-S} sobre el conjunto de prueba de DeepCrack: imagen original, máscara ground-truth y predicción segmentada.}
+\label{fig:qualitative_pidnet}
 \end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.9\columnwidth]{figs/yolo/semantic_samples_eval.png}
+\caption{Evaluación cualitativa de \textbf{YOLOv11-Seg} (mejor modelo estricto) sobre DeepCrack, en los casos de peor, mediano y mejor $IoU$: imagen original, máscara ground-truth y predicción.}
+\label{fig:qualitative_yolo}
+\end{figure}
+
+% [TODO PARA AGUSTÍN - UNet++: agregar figura de muestras cualitativas de UNet++]
+% \begin{figure}[t]
+% \centering
+% \includegraphics[width=0.9\columnwidth]{figs/unet/seg_samples_unet.png}
+% \caption{Evaluación cualitativa de \textbf{UNet++} (ResNet-34 + scSE) sobre DeepCrack.}
+% \label{fig:qualitative_unet}
+% \end{figure}
 
 \subsection{Discusión y Limitaciones Metodológicas}
 
