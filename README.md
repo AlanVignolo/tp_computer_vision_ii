@@ -55,6 +55,7 @@ tp_computer_vision_ii/
 │   ├── pidnet/                       # Módulo PIDNet (Segmentación en Tiempo Real)
 │   │   ├── pidnet.ipynb              # Entrenamiento, validación e inferencia de imágenes
 │   │   ├── infer_video_pidnet.ipynb  # Inferencia y segmentación de video optimizada
+│   │   ├── benchmark_pidnet.ipynb    # Benchmark riguroso de velocidad (GPU/CPU) y exportación IEEE
 │   │   ├── models/                   # Arquitectura PIDNet, PagFM, DAPPM/PAPPM, Bag
 │   │   ├── pretrained_models/        # Backbones preentrenados de Cityscapes (.pt)
 │   │   └── best_trained/             # Checkpoints de los mejores modelos entrenados (.pth)
@@ -110,6 +111,14 @@ Pipeline optimizado para el procesamiento y análisis de secuencias de video:
 - **Procesamiento por Lotes (Batching)**: Aceleración por GPU mediante `BATCH_SIZE` configurable, `torch.inference_mode()` y AMP FP16.
 - **Superposición Vectorizada y Telemetría HUD**: Overlay translúcido con contornos vectoriales (`cv2.drawContours`) y telemetría en tiempo real (FPS instantáneo, detección y porcentaje de severidad/área).
 - **Timeline de Daño y Keyframes**: Gráfico continuo de porcentaje de área afectada a lo largo de la línea temporal del video y reproductor HTML5 integrado.
+
+### 5.4 Benchmark Riguroso de Inferencia y Eficiencia ([`src/pidnet/benchmark_pidnet.ipynb`](src/pidnet/benchmark_pidnet.ipynb))
+Suite estandarizado para mediciones científicas de velocidad y complejidad computacional:
+- **Aislamiento de I/O y Gráficos**: Medición de latencia pura en GPU sin sobrecargas de disco ni Matplotlib.
+- **Protocolo de Warm-up y Sincronización CUDA**: Uso de `torch.cuda.Event` y `torch.cuda.synchronize()`.
+- **Modos de Precisión**: Comparación estandarizada FP32 vs AMP FP16 ($BS = 1$, $512\times 512$).
+- **Análisis de Escalabilidad**: Medición de throughput (FPS) y latencia unitaria para $BS \in \{1, 2, 4, 8\}$.
+- **Exportación Automática**: Generador de filas LaTeX para la **Tabla II** (`tab:results_comparison`) del paper IEEE (`main.tex`).
 
 ---
 

@@ -42,7 +42,7 @@ alan.vignolo@gmail.com}
 \maketitle
 
 \begin{abstract}
-La detección temprana y delimitación precisa de fisuras en estructuras civiles (puentes, pavimentos y presas) resulta crítica para la planificación del mantenimiento preventivo y la seguridad estructural. Tradicionalmente, este monitoreo se realiza mediante inspecciones visuales manuales, un procedimiento subjetivo, costoso y de alto riesgo en zonas de difícil acceso. Este trabajo presenta un estudio comparativo de tres arquitecturas de segmentación semántica representativas del estado del arte contemporáneo: UNet++ (enfoque clásico basado en conexiones densas anidadas), PIDNet (arquitectura de tres ramas diseñada para segmentación en tiempo real guiada por bordes) y YOLOv11-Seg (detector de una etapa de última generación adaptado a segmentación). Los modelos fueron evaluados sobre el dataset público DeepCrack utilizando un entorno de hardware estandarizado (GPU NVIDIA Tesla T4). El desempeño se analiza cuantitativa y cualitativamente en función de la precisión a nivel de píxel ($mIoU$ global e $IoU$ específico de grieta) y la eficiencia computacional (latencia de inferencia y tasa de cuadros por segundo). Los resultados revelan un marcado compromiso técnico: mientras que UNet++ alcanza la mayor fidelidad de segmentación ($IoU_{\text{grieta}} = 0.7314$, $mIoU = 0.8588$), los modelos orientados a tiempo real demuestran un balance operativo superior, alcanzando PIDNet un $IoU_{\text{grieta}}$ de $0.6660$ a $17.04$~FPS y YOLOv11-Seg hasta $0.6756$ de $IoU_{\text{grieta}}$ con mínimo costo de cómputo. Finalmente, se analizan críticamente las limitaciones metodológicas del desarrollo descentralizado y se proponen criterios de selección para la integración en sistemas de inspección robótica y vehículos aéreos no tripulados (UAVs).
+La detección temprana y delimitación precisa de fisuras en estructuras civiles (puentes, pavimentos y presas) resulta crítica para la planificación del mantenimiento preventivo y la seguridad estructural. Tradicionalmente, este monitoreo se realiza mediante inspecciones visuales manuales, un procedimiento subjetivo, costoso y de alto riesgo en zonas de difícil acceso. Este trabajo presenta un estudio comparativo de tres arquitecturas de segmentación semántica representativas del estado del arte contemporáneo: UNet++ (enfoque clásico basado en conexiones densas anidadas), PIDNet (arquitectura de tres ramas diseñada para segmentación en tiempo real guiada por bordes) y YOLOv11-Seg (detector de una etapa de última generación adaptado a segmentación). Los modelos fueron evaluados sobre el dataset público DeepCrack utilizando un entorno de hardware estandarizado (GPU NVIDIA Tesla T4). El desempeño se analiza en función de la precisión a nivel de píxel ($mIoU$ global e $IoU$ específico de grieta) y la eficiencia computacional (latencia de inferencia y tasa de frames por segundo). Los resultados revelan un marcado compromiso técnico: mientras que UNet++ alcanza la mayor fidelidad de segmentación ($IoU_{\text{grieta}} = 0.7314$, $mIoU = 0.8588$), los modelos orientados a tiempo real demuestran un balance operativo superior, alcanzando PIDNet-S un $IoU_{\text{grieta}}$ de $0.6660$ a $86.06$~FPS (latencia neta de $11.62$~ms en forward pass y $14.48$~ms / $69.05$~FPS en pipeline completo) y YOLOv11-Seg hasta $0.6756$ de $IoU_{\text{grieta}}$ con mínimo costo de cómputo. Finalmente, se analizan críticamente las limitaciones metodológicas del desarrollo descentralizado y se proponen criterios de selección para la integración en sistemas de inspección robótica y vehículos aéreos no tripulados (UAVs).
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -51,20 +51,20 @@ Segmentación semántica, detección de grietas, visión por computadora, DeepCr
 
 \section{Introducción}
 
-El monitoreo continuo y periódico de la infraestructura civil (puentes, autopistas, túneles, diques y edificaciones) es indispensable para preservar la integridad física y prolongar la vida útil de las obras públicas y privadas. Las grietas y microfisuras en el hormigón constituyen los primeros síntomas visibles de degradación estructural producidos por fatiga del material, asentamientos o factores ambientales adversos. Una detección incipiente permite intervenir oportunamente mediante acciones de mantenimiento preventivo, mitigando el riesgo de colapsos catastróficos y reduciendo sustancialmente los costos de reparación~\cite{kaveh2024recent}. Históricamente, estas tareas han dependido de la inspección visual manual in situ por parte de personal técnico especializado. No obstante, este enfoque convencional adolece de limitaciones intrínsecas: es lento, costoso, cualitativo, dependiente de la subjetividad del operador y conlleva un peligro inherente cuando se inspeccionan estructuras a gran altura o de acceso restringido~\cite{perry2020streamlined}.
+El monitoreo continuo y periódico de la infraestructura civil (puentes, autopistas, túneles, diques y edificaciones) es indispensable para preservar la integridad física y prolongar la vida útil de las obras públicas y privadas. Las grietas y microfisuras en el hormigón constituyen los primeros síntomas visibles de degradación estructural producidos por fatiga del material, asentamientos o factores ambientales adversos. Una detección incipiente permite intervenir oportunamente mediante acciones de mantenimiento preventivo, mitigando el riesgo de colapsos catastróficos y reduciendo sustancialmente los costos de reparación. Históricamente, estas tareas han dependido de la inspección visual manual in situ por parte de personal técnico especializado. No obstante, este enfoque convencional tiene limitaciones intrínsecas: es lento, costoso, cualitativo, dependiente de la subjetividad del operador y conlleva un peligro inherente cuando se inspeccionan estructuras a gran altura o de acceso restringido~\cite{perry2020streamlined}.
 
-En los últimos años, el avance acelerado de las técnicas de visión por computadora y el aprendizaje profundo (\textit{deep learning}) ha posibilitado la automatización masiva de la inspección estructural~\cite{kaveh2024recent}. A diferencia de los métodos de clasificación de imágenes o de detección mediante cajas delimitadoras (\textit{bounding boxes}), la segmentación semántica resulta indispensable para este dominio, ya que clasifica cada píxel de la imagen (grieta versus fondo). Esto permite caracterizar la geometría intrínseca de la fisura, su longitud, espesor promedio, conectividad topológica y evolución temporal, insumos básicos para el cálculo de índices de daño estructural.
+En los últimos años, el avance de las técnicas de visión por computadora y el aprendizaje profundo (\textit{deep learning}) ha posibilitado la automatización masiva de la inspección estructural~\cite{liu2025crack}. A diferencia de los métodos de clasificación de imágenes o de detección mediante cajas delimitadoras (\textit{bounding boxes}), la segmentación semántica resulta indispensable para este dominio, ya que clasifica cada píxel de la imagen (grieta versus fondo). Esto permite caracterizar la geometría de la fisura, su longitud, espesor promedio, conectividad topológica y evolución temporal, insumos básicos para el cálculo de índices de daño estructural.
 
-La viabilidad práctica de estos sistemas ha sido validada en diversos proyectos y pruebas de campo reales de infraestructura civil publicados en el transcurso de los últimos ocho años. Un antecedente directo y emblemático es el trabajo de Perry et al.~\cite{perry2020streamlined} (2020), en el cual se desarrolló y desplegó con éxito un sistema de inspección de puentes integrando vehículos aéreos no tripulados (UAVs) y redes neuronales convolucionales sobre el puente \textit{Oxbow Bridge} en Loveland (Colorado, EE.UU.), demostrando cómo la captura aérea combinada con visión artificial reemplaza objetivamente las escalas manuales de deterioro. Asimismo, Liu et al.~\cite{liu2025crack} (2025) implementaron un esquema de inspección y cuantificación tridimensional de grietas acoplando parámetros fotogramétricos de UAVs sobre un puente en arco real con márgenes de error inferiores al 2\%, mientras que Hac{\i}efendio{\u{g}}lu y Ba{\c{s}}a{\u{g}}a~\cite{haciefendioglu2022concrete} (2022) validaron la robustez de modelos de aprendizaje profundo en superficies viales bajo condiciones ambientales heterogéneas y variaciones críticas de iluminación. Estos casos evidencian que el requerimiento operativo no sólo demanda precisión de segmentación, sino también capacidad de procesamiento en tiempo real o en dispositivos embebidos montados en drones~\cite{zhang2025accuracy}.
+La viabilidad práctica de estos sistemas ha sido validada en diversos proyectos y pruebas de campo reales de infraestructura civil publicados en el transcurso de los últimos ocho años. Un antecedente directo y destacable es el trabajo de Perry et al.~\cite{perry2020streamlined} (2020), en el cual se desarrolló y desplegó con éxito un sistema de inspección de puentes integrando vehículos aéreos no tripulados (UAVs), modelado por fotogrametría y visión artificial (redes neuronales convolucionales y detector de bordes de Canny)   sobre el puente \textit{Oxbow Bridge} en Loveland (Colorado, EE.UU.). Asimismo, Liu et al.~\cite{liu2025crack} (2025) implementaron un esquema de inspección y cuantificación tridimensional de grietas acoplando parámetros fotogramétricos de UAVs sobre un puente en arco real con márgenes de error inferiores al 2\%. En casos como estos, el requerimiento operativo no sólo demanda precisión de segmentación, sino también capacidad de procesamiento en tiempo real o en dispositivos embebidos montados en drones. Esto justifica la creación u optimización de modelos personalizados y ajustados específicamente a la detección de grietas, para alcanzar una relación óptima entre desempeño, velocidad y consumo, como demuestran Zhang et al. ~\cite{zhang2025accuracy} (2025) al modificar una arquitectura YOLOv8 para conseguir una detección más precisa, más rápida y con menos operaciones.
 
-A pesar de la proliferación de modelos en la literatura, frecuentemente se evalúan en condiciones aisladas o con protocolos disímiles, dificultando la comparación justa entre la precisión de máscara y la latencia de inferencia. Para abordar esta problemática, este trabajo investiga comparativamente tres familias de arquitecturas complementarias:
+En la literatura, no se encuentra una preferencia por alguna familia de modelos en específico para la detección y/o segmentación de grietas, usándose incluso técnicas deterministas de visión artificial como los operadores de Canny, Sobel o Prewitt. Para abordar parcialmente esta problemática, este trabajo investiga comparativamente tres familias de arquitecturas complementarias:
 \begin{enumerate}
     \item \textbf{UNet++}~\cite{zhou2018unetplusplus}: extensión de la cánonica U-Net con conexiones densas anidadas y rediseño de caminos \textit{skip}, concebida para maximizar la precisión a múltiples escalas.
     \item \textbf{PIDNet}~\cite{xu2023pidnet}: arquitectura tri-rama (detalle, contexto y borde) inspirada en el control PID clásico, orientada específicamente a la segmentación semántica en tiempo real guiada por atención a contornos.
     \item \textbf{YOLOv11-Seg}~\cite{kahn2024yolo11}: la versión más reciente del paradigma de detección y segmentación unificada de Ultralytics, optimizada para extrema ligereza y velocidad de cómputo.
 \end{enumerate}
 
-El objetivo principal del proyecto es realizar un análisis comparativo riguroso de estas tres arquitecturas sobre el dataset público DeepCrack~\cite{liu2019deepcrack}, evaluando tanto su capacidad de delimitación a nivel de píxel ($mIoU$, $IoU_{\text{grieta}}$ y $F1\text{-Score}$) como su rendimiento temporal (latencia en milisegundos y FPS) en un entorno de cómputo unificado (GPU NVIDIA Tesla T4). Adicionalmente, se contrastan las implicancias prácticas de su implementación para proporcionar directrices técnicas sólidas en aplicaciones reales de ingeniería civil.
+El objetivo principal del proyecto es realizar un análisis comparativo de estas tres arquitecturas sobre el dataset público DeepCrack~\cite{liu2019deepcrack}, evaluando tanto su capacidad de delimitación a nivel de píxel ($mIoU$, $IoU_{\text{grieta}}$ y $F1\text{-Score}$) como su rendimiento temporal (latencia en milisegundos y FPS) en un entorno de cómputo unificado (GPU NVIDIA Tesla T4). Adicionalmente, se contrastan las implicancias prácticas de su implementación para proporcionar directrices técnicas sólidas en aplicaciones reales de ingeniería civil.
 
 El resto de este artículo se estructura de la siguiente manera: la Sección~II detalla la metodología, las características del dataset, el preprocesamiento, el diseño de los modelos y el protocolo experimental; la Sección~III presenta los resultados cuantitativos y cualitativos junto con la discusión crítica de hallazgos y limitaciones; y la Sección~IV expone las conclusiones finales del estudio.
 
@@ -83,7 +83,7 @@ El problema presenta un severo desbalance de clases típico del dominio: la clas
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\columnwidth]{figs/img_mask_border.png}
+\includegraphics[width=\columnwidth]{figs/pidnet/img_mask_border.png}
 \caption{Muestras representativas del dataset DeepCrack~\cite{liu2019deepcrack}: imagen de entrada original (izquierda), máscara ground-truth binaria (centro) y mapa de bordes estructurales extraído mediante detector Canny (derecha) para la supervisión de contornos.}
 \label{fig:dataset_samples}
 \end{figure}
@@ -130,7 +130,7 @@ PIDNet~\cite{xu2023pidnet} es una arquitectura de segmentación en tiempo real i
     \item \textbf{Rama Integral (P - Rama de Contexto):} utiliza bloques convolucionales con agregación progresiva y gran campo receptivo para extraer información semántica global del fondo y la estructura.
     \item \textbf{Rama Derivativa (D - Rama de Borde):} procesa mapas de gradiente y bordes de alta frecuencia, actuando como un diferenciador que resalta las transiciones espaciales abruptas.
 \end{itemize}
-La fusión de características se realiza mediante módulos de Agregación Guiada por Píxel (PAG) y Agregación Guiada Bilateral (BGA), permitiendo que la rama de bordes module directamente la decisión semántica final. Se seleccionó la variante ligera \textbf{PIDNet-S} adaptada para dos clases de salida e inicializada con pesos preentrenados en Cityscapes.
+La fusión de características se realiza mediante módulos de Agregación Guiada por Píxel (PAG) y Agregación Guiada Bilateral (BGA), permitiendo que la rama de bordes module directamente la decisión semántica final. Se seleccionó la variante ligera \textbf{PIDNet-S} (7.72~M parámetros) adaptada para dos clases de salida e inicializada con pesos preentrenados en Cityscapes.
 
 \subsubsection{UNet++ (Nested Dense UNet)}
 % [TODO PARA AGUSTÍN - UNet++: Validar backbone y configuración de atención]
@@ -167,9 +167,9 @@ Momentum & 0.9 & 0.9 & 0.937 \\
 Weight Decay & $5 \times 10^{-4}$ & $1 \times 10^{-4}$ & $5 \times 10^{-4}$ \\
 Batch size & 8 & 8 & 8 \\
 Resolución entrada & $512 \times 512$ & $512 \times 512$ & $512 \times 512$ \\
-épocas máximas & 50 & 100 & 200 \\
+Épocas máximas & 50 & 100 & 200 \\
 Paciencia (\textit{Early stop}) & 10 & 10 & 30 \\
-época de convergencia & 29 (stop: 41) & 15 & $\approx 60$ \\
+Época de convergencia & 29 (stop: 41) & 15 & $\approx 60$ \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -219,7 +219,7 @@ F1 = \frac{2 \cdot TP}{2 \cdot TP + FP + FN} = \frac{2 \cdot \text{Precision} \c
 \label{eq:f1}
 \end{equation}
 
-\textbf{Eficiencia computacional:} se evaluó la latencia promedio por imagen en milisegundos ($ms$) con \textit{batch size} unitario ($BS = 1$), realizando pasadas de calentamiento (\textit{warmup}) y sincronización de GPU (\texttt{torch.cuda.synchronize()}), reportando además el rendimiento en cuadros por segundo ($\text{FPS} = 1000 / \text{latencia}$).
+\textbf{Eficiencia computacional:} se evaluó la latencia de inferencia y el rendimiento en cuadros por segundo (\textit{Throughput}, $\text{FPS} = 1000 / \text{latencia}$) con \textit{batch size} unitario ($BS = 1$) a $512\times 512$. Para garantizar mediciones libres de sobrecargas de I/O o visualización en CPU, se implementó un protocolo estandarizado con eventos de GPU (\texttt{torch.cuda.Event}) y sincronización estricta (\texttt{torch.cuda.synchronize()}), descartando las primeras 15--20 iteraciones de calentamiento (\textit{warm-up}) y promediando sobre 100 iteraciones independientes.
 
 \section{Resultados Experimentales y Análisis de Resultados}
 
@@ -234,32 +234,32 @@ Los resultados cuantitativos obtenidos sobre el conjunto de evaluación de DeepC
 \toprule
 \textbf{Modelo} & \textbf{Backbone / Variante} & \textbf{$mIoU_{\text{2c}}$} & \textbf{$IoU_{\text{grieta}}$} & \textbf{$F1\text{-Score}$} & \textbf{Precision} & \textbf{Recall} & \textbf{Latencia (ms)} & \textbf{FPS} \\
 \midrule
-\textbf{UNet++} & ResNet-34 + scSE (5 capas) & \textbf{0.8588} & \textbf{0.7314} & \textbf{0.8449} & 0.8504 & \textbf{0.8394} & $\approx 112.5$ & $\approx 8.9$ \\
-UNet++ & ResNet-34 (5 capas, base) & 0.8524 & 0.7187 & 0.8363 & \textbf{0.8828} & 0.7945 & $\approx 105.0$ & $\approx 9.5$ \\
-UNet++ & EfficientNet-B0 (5 capas) & 0.8584 & 0.7306 & 0.8444 & 0.8584 & 0.8307 & $\approx 98.0$ & $\approx 10.2$ \\
+\textbf{UNet++} & ResNet-34 + scSE (5 capas) & \textbf{0.8588} & \textbf{0.7314} & \textbf{0.8449} & 0.8504 & \textbf{0.8394} & $\approx 112.50$ & $\approx 8.89$ \\
+UNet++ & ResNet-34 (5 capas, base) & 0.8524 & 0.7187 & 0.8363 & \textbf{0.8828} & 0.7945 & $\approx 105.00$ & $\approx 9.52$ \\
+UNet++ & EfficientNet-B0 (5 capas) & 0.8584 & 0.7306 & 0.8444 & 0.8584 & 0.8307 & $\approx 98.00$ & $\approx 10.20$ \\
 \midrule
-\textbf{PIDNet-S} & 3-Ramas (Detalle/Contexto/Borde) & 0.8246 & 0.6660 & 0.7995 & 0.8320 & 0.7690 & \textbf{58.67} & \textbf{17.04} \\
+\textbf{PIDNet-S} & 3-Ramas (Detalle/Contexto/Borde) & 0.8246 & 0.6660 & 0.7995 & 0.8320 & 0.7690 & \textbf{11.62} & \textbf{86.06} \\
 \midrule
-\textbf{YOLO11s-Seg} & Small ($\text{imgsz}=512$) & 0.8295 & 0.6756 & 0.8064 & 0.8150 & 0.7980 & $\approx 22.0$ & $\approx 45.4$ \\
-\textbf{YOLO11n-Seg} & Nano ($\text{imgsz}=512$) & 0.8259 & 0.6686 & 0.8014 & 0.8020 & 0.8010 & $\approx 14.5$ & $\approx 68.9$ \\
-YOLO11n-Seg* & Nano Hi-Res ($\text{imgsz}=768$) & 0.8438 & 0.7026 & 0.8253 & 0.8310 & 0.8197 & $\approx 28.0$ & $\approx 35.7$ \\
+\textbf{YOLO11s-Seg} & Small ($\text{imgsz}=512$) & 0.8295 & 0.6756 & 0.8064 & 0.8150 & 0.7980 & $\approx 22.00$ & $\approx 45.45$ \\
+\textbf{YOLO11n-Seg} & Nano ($\text{imgsz}=512$) & 0.8259 & 0.6686 & 0.8014 & 0.8020 & 0.8010 & $\approx 14.50$ & $\approx 68.96$ \\
+YOLO11n-Seg* & Nano Hi-Res ($\text{imgsz}=768$) & 0.8438 & 0.7026 & 0.8253 & 0.8310 & 0.8197 & $\approx 28.00$ & $\approx 35.71$ \\
 \bottomrule
 \end{tabular}
 \end{center}
 \vspace{1ex}
-\footnotesize{\textit{Nota:} (*) YOLO11n-Seg a $768\times 768$ se incluye como referencia de mejora por resolución espacial fuera de la comparativa estricta a $512\times 512$.}
+\footnotesize{\textit{Nota:} (*) YOLO11n-Seg a $768\times 768$ se incluye como referencia de mejora por resolución espacial fuera de la comparativa estricta a $512\times 512$. Para PIDNet-S, la latencia reportada corresponde al forward pass puro en GPU ($11.62$~ms / $86.06$~FPS en FP32); el pipeline completo end-to-end con interpolación y argmax alcanza $14.48$~ms / $69.05$~FPS, escalando a $402.15$~FPS con batch size 8.}
 \end{table*}
 
 Del análisis cuantitativo se desprenden los siguientes aspectos fundamentales:
 \begin{enumerate}
     \item \textbf{Liderazgo en fidelidad de segmentación:} UNet++ con codificador ResNet-34 y atención scSE alcanzó el mayor desempeño global con un $IoU_{\text{grieta}}$ de $0.7314$ y un $F1\text{-Score}$ de $0.8449$, superando a las demás arquitecturas en capacidad de delinear bifurcaciones y grietas complejas.
-    \item \textbf{Eficacia del diseño tri-rama de PIDNet:} PIDNet-S alcanzó un sólido $IoU_{\text{grieta}}$ de $0.6660$ ($mIoU = 0.8246$) con una tasa de $17.04$~FPS en inferencia nativa en PyTorch. La curva de convergencia (Fig.~\ref{fig:pidnet_curves}) demuestra una estabilización óptima alrededor de la época 29, donde la pérdida de borde guía efectivamente la delimitación sin provocar sobreajuste temprano.
+    \item \textbf{Eficacia del diseño tri-rama de PIDNet:} PIDNet-S alcanzó un sólido $IoU_{\text{grieta}}$ de $0.6660$ ($mIoU = 0.8246$) con una latencia neta de $11.62$~ms ($86.06$~FPS) en el forward pass nativo en GPU y $14.48$~ms ($69.05$~FPS) en el pipeline completo extremo a extremo. Su arquitectura ligera ($7.72$~M parámetros) demostró una alta escalabilidad, alcanzando más de $400$~FPS al procesar lotes con $\text{batch size} = 8$. La curva de convergencia (Fig.~\ref{fig:pidnet_curves}) demuestra una estabilización óptima alrededor de la época 29, donde la pérdida de borde guía efectivamente la delimitación sin provocar sobreajuste temprano.
     \item \textbf{Comportamiento de la familia YOLOv11:} YOLO11s-Seg y YOLO11n-Seg obtuvieron un $IoU_{\text{grieta}}$ de $0.6756$ y $0.6686$ respectivamente. Al elevar la resolución a $768\times 768$ (YOLO11n Hi-Res), el $IoU_{\text{grieta}}$ ascendió notablemente a $0.7026$, confirmando que la limitación principal en modelos basados en \textit{anchor-free/prototipos} sobre fisuras delgadas radica en la resolución espacial de los mapas de características.
 \end{enumerate}
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\columnwidth]{figs/loss_iou.png}
+\includegraphics[width=\columnwidth]{figs/pidnet/loss_iou.png}
 \caption{Curvas de evolución del entrenamiento de PIDNet-S sobre DeepCrack: (a) pérdida en entrenamiento y validación, (b) evolución de $mIoU$ global, y (c) progreso del $IoU$ y $F1\text{-Score}$ específico de la clase grieta en validación.}
 \label{fig:pidnet_curves}
 \end{figure}
@@ -273,7 +273,7 @@ La evaluación visual de las máscaras predichas revela diferencias marcadas en 
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\columnwidth]{figs/semantic_samples_final.png}
+\includegraphics[width=0.9\columnwidth]{figs/pidnet/seg_samples_s_cropped.png}
 \caption{Muestras de evaluación cualitativa sobre el conjunto de prueba de DeepCrack: imagen original, máscara ground-truth y predicciones segmentadas.}
 \label{fig:qualitative_samples}
 \end{figure}
@@ -284,7 +284,7 @@ La evaluación visual de las máscaras predichas revela diferencias marcadas en 
 Los resultados validan la existencia de un claro compromiso ingenieril entre costo computacional y fidelidad pixel-wise:
 \begin{itemize}
     \item Si el objetivo es la **auditoría estructural \textit{offline} de alta precisión**, donde la exactitud métrica del ancho de grieta es prioritaria y no existen restricciones de tiempo, **UNet++ con atención scSE** representa la opción superior ($IoU_{\text{grieta}} = 0.7314$).
-    \item Si el despliegue requiere **monitoreo dinámico en tiempo real** montado en drones (UAVs) o vehículos de inspección con hardware restringido, **PIDNet-S** y **YOLO11-Seg** ofrecen la mejor solución de compromiso, procesando secuencias de video a más de $17-45$~FPS con una pérdida de $IoU$ de apenas 5 a 6 puntos porcentuales respecto a UNet++.
+    \item Si el despliegue requiere **monitoreo dinámico en tiempo real** montado en drones (UAVs) o vehículos de inspección con hardware restringido, **PIDNet-S** y **YOLO11-Seg** ofrecen la mejor solución de compromiso, procesando a más de $69-86$~FPS en PIDNet y $>45$~FPS en YOLO con una pérdida de $IoU$ de apenas 5 a 6 puntos porcentuales respecto a UNet++.
 \end{itemize}
 
 \subsubsection{Análisis Crítico de Limitaciones Experimentales}
@@ -301,24 +301,13 @@ A partir de la experimentación, análisis cuantitativo y evaluación comparativ
 
 \begin{enumerate}
     \item \textbf{Fidelidad de segmentación semántica:} UNet++ con codificador ResNet-34 y bloques de atención espacial y de canal (scSE) demostró el desempeño más alto en precisión a nivel de píxel ($IoU_{\text{grieta}} = 0.7314$, $mIoU = 0.8588$), confirmando la superioridad de las conexiones densas anidadas para preservar la continuidad en fisuras estructurales complejas.
-    \item \textbf{Viabilidad operativa en tiempo real:} PIDNet-S y YOLO11-Seg probaron ser alternativas altamente eficientes para procesamiento en tiempo real, alcanzando tasas de $17.04$~FPS y hasta $>45$~FPS respectivamente sobre GPU NVIDIA T4, lo que habilita su despliegue directo en flujos de video continuo.
-    \item \textbf{Eficacia de la supervisión de contornos (PIDNet):} La incorporación de una rama derivativa de bordes explícita modulada mediante pérdida \textit{Boundary-Aware} permitió a PIDNet alcanzar un $IoU_{\text{grieta}}$ de $0.6660$ con una reducción del 48\% en la latencia respecto a UNet++, evidenciando la efectividad de guiar la segmentación de estructuras delgadas mediante información de alta frecuencia.
+    \item \textbf{Viabilidad operativa en tiempo real:} PIDNet-S y YOLO11-Seg probaron ser alternativas altamente eficientes para procesamiento en tiempo real, alcanzando tasas de $86.06$~FPS ($69.05$~FPS en pipeline completo) y hasta $>45-68$~FPS respectivamente sobre GPU NVIDIA Tesla T4, lo que habilita su despliegue directo en flujos de video continuo de alta resolución sin degradación perceptiva.
+    \item \textbf{Eficacia de la supervisión de contornos (PIDNet):} La incorporación de una rama derivativa de bordes explícita modulada mediante pérdida \textit{Boundary-Aware} permitió a PIDNet-S alcanzar un $IoU_{\text{grieta}}$ de $0.6660$ con una latencia de solo $11.62$~ms (reduciendo en casi un 90\% el tiempo de inferencia respecto a UNet++), evidenciando la efectividad de guiar la segmentación de estructuras delgadas mediante información de alta frecuencia.
     \item \textbf{Criterios de selección para ingeniería civil:} Se establece una pauta de selección clara según el caso de uso: UNet++ se consolida como el modelo óptimo para inspecciones estáticas y auditorías forenses de alta precisión (\textit{offline}), mientras que PIDNet y YOLOv11 son los modelos indicados para inspecciones dinámicas y patrullajes autónomos mediante drones (UAVs) o vehículos terrestres.
     \item \textbf{Lecciones metodológicas y trabajo futuro:} El estudio demostró la importancia crítica de unificar formatos de entrada y criterios de evaluación. Como trabajo futuro, se proyecta integrar técnicas de cuantificación métrica del ancho de grieta en milímetros combinando la segmentación con parámetros de cámara UAV~\cite{liu2025crack}, así como la cuantización a FP16/INT8 mediante TensorRT para su implementación en dispositivos embebidos de bajo consumo (e.g., NVIDIA Jetson).
 \end{enumerate}
 
-\begin{thebibliography}{00}
-\bibitem{kaveh2024recent} A. Kaveh and M. Alhajj, ``Recent advances in crack detection technologies for structures,'' \emph{Frontiers in Built Environment}, vol. 10, p. 1321634, 2024.
-\bibitem{perry2020streamlined} B. J. Perry, Y. Guo, R. Atadero, and J. W. van de Lindt, ``Streamlined bridge inspection system utilizing unmanned aerial vehicles (UAVs) and machine learning,'' \emph{Measurement}, vol. 164, p. 108048, 2020.
-\bibitem{liu2025crack} Z.-L. Liu, A. Zhou, X.-R. Ran, Y.-P. Wu, W.-G. Zhao, and H. Zhang, ``A crack detection and quantification method using matched filter and photograph reconstruction,'' \emph{Scientific Reports}, vol. 15, no. 1, p. 25266, 2025.
-\bibitem{haciefendioglu2022concrete} K. Hac{\i}efendio{\u{g}}lu and H. B. Ba{\c{s}}a{\u{g}}a, ``Concrete road crack detection using deep learning-based Faster R-CNN method,'' \emph{Iranian Journal of Science and Technology, Transactions of Civil Engineering}, vol. 46, no. 2, pp. 1025--1036, 2022.
-\bibitem{zhang2025accuracy} J. Zhang, Z. V. Beliaeva, and Y. Huang, ``Accuracy--efficiency trade-off: Optimizing YOLOv8 for structural crack detection,'' \emph{Sensors}, vol. 25, no. 13, p. 3873, 2025.
-\bibitem{liu2019deepcrack} Y. Liu, J. Yao, X. Lu, R. Xie, and L. Li, ``DeepCrack: A deep hierarchical feature learning architecture for crack segmentation,'' \emph{Neurocomputing}, vol. 338, pp. 139--153, 2019.
-\bibitem{zhou2018unetplusplus} Z. Zhou, M. M. R. Siddiquee, N. Tajbakhsh, and J. Liang, ``UNet++: A nested U-Net architecture for medical image segmentation,'' in \emph{Deep Learning in Medical Image Analysis and Multimodal Learning for Clinical Decision Support}, Springer, 2018, pp. 3--11.
-\bibitem{xu2023pidnet} J. Xu, Z. Xiong, and S. P. Bhattacharyya, ``PIDNet: A real-time semantic segmentation network inspired by PID controllers,'' in \emph{Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV)}, 2023, pp. 19529--19539.
-\bibitem{kahn2024yolo11} G. Jocher, A. Chaurasia, and J. Qiu, ``Ultralytics YOLO11,'' 2024. [Online]. Available: \url{https://github.com/ultralytics/ultralytics}
-\bibitem{hu2019topology} C. Hu, D. Peng, P. Guan, et al., ``Topology-preserving deep image segmentation,'' in \emph{Advances in Neural Information Processing Systems (NeurIPS)}, vol. 32, 2019.
-\bibitem{wang2024pavement} Y. Wang, et al., ``Pavement fatigue crack detection and severity classification based on convolutional neural network,'' \emph{arXiv preprint arXiv:2407.16021}, 2024.
-\end{thebibliography}
+\bibliographystyle{IEEEtran}
+\bibliography{references}
 
 \end{document}
