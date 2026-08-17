@@ -30,7 +30,7 @@ quiroga.m.gabriel@gmail.com}
 \IEEEauthorblockA{\textit{Facultad de Ingeniería} \\
 \textit{Universidad de Buenos Aires (FIUBA)}\\
 Buenos Aires, Argentina \\
-abiancardi@fi.uba.ar}
+biancardiagustin123@gmail.com}
 \and
 \IEEEauthorblockN{3\textsuperscript{rd} Alan Vignolo}
 \IEEEauthorblockA{\textit{Facultad de Ingeniería} \\
@@ -57,7 +57,7 @@ En los últimos años, el avance de las técnicas de visión por computadora y e
 
 La viabilidad práctica de estos sistemas ha sido validada en diversos proyectos y pruebas de campo reales de infraestructura civil publicados en el transcurso de los últimos ocho años. Un antecedente directo y destacable es el trabajo de Perry et al.~\cite{perry2020streamlined} (2020), en el cual se desarrolló y desplegó con éxito un sistema de inspección de puentes integrando vehículos aéreos no tripulados (UAVs), modelado por fotogrametría y visión artificial (redes neuronales convolucionales y detector de bordes de Canny)   sobre el puente \textit{Oxbow Bridge} en Loveland (Colorado, EE.UU.). Asimismo, Liu et al.~\cite{liu2025crack} (2025) implementaron un esquema de inspección y cuantificación tridimensional de grietas acoplando parámetros fotogramétricos de UAVs sobre un puente en arco real con márgenes de error inferiores al 2\%. En casos como estos, el requerimiento operativo no sólo demanda precisión de segmentación, sino también capacidad de procesamiento en tiempo real o en dispositivos embebidos montados en drones. Esto justifica la creación u optimización de modelos personalizados y ajustados específicamente a la detección de grietas, para alcanzar una relación óptima entre desempeño, velocidad y consumo, como demuestran Zhang et al. ~\cite{zhang2025accuracy} (2025) al modificar una arquitectura YOLOv8 para conseguir una detección más precisa, más rápida y con menos operaciones.
 
-En arquitecturas encoder--decoder, trabajos recientes indican que la atención y los encoders preentrenados pueden mejorar la segmentación de grietas finas sobre fondos complejos. He et al.~\cite{he2023crack} alcanzaron un $mIoU$ de 0.872 en DeepCrack mediante SEAD-U-Net, que combina atención espacial y de canal. Lau et al.~\cite{lau2020automated} emplearon un encoder ResNet-34 preentrenado y atención scSE sobre CFD y Crack500, mientras que König et al.~\cite{konig2021optimized} analizaron encoders de las familias ResNet, VGG y EfficientNet. Estos antecedentes motivan evaluar en UNet++ tres variables: la profundidad del decoder, el encoder —ResNet-18, ResNet-34 o EfficientNet-B0— y el uso de scSE.
+En arquitecturas encoder--decoder, trabajos recientes indican que la atención y los encoders preentrenados pueden mejorar la segmentación de grietas finas sobre fondos complejos. He et al.~\cite{he2023crack} alcanzaron un $mIoU$ de 0.872 en DeepCrack mediante SEAD-U-Net, que combina atención espacial y de canal. Lau et al.~\cite{lau2020automated} emplearon un encoder ResNet-34 preentrenado y atención scSE sobre CFD y Crack500, mientras que König et al.~\cite{konig2021optimized} analizaron encoders de las familias ResNet, VGG y EfficientNet. Estos antecedentes motivan evaluar en UNet++ tres variables: la profundidad del decoder, el encoder (ResNet-18, ResNet-34 o EfficientNet-B0) y el uso de scSE.
 
 En la literatura, no se encuentra una preferencia por alguna familia de modelos en específico para la detección y/o segmentación de grietas, usándose incluso técnicas deterministas de visión artificial como los operadores de Canny, Sobel o Prewitt. Para abordar parcialmente esta problemática, este trabajo investiga comparativamente tres familias de arquitecturas complementarias:
 \begin{enumerate}
@@ -140,11 +140,13 @@ La conversión de máscara a polígono impone un techo de $IoU$ intrínseco: aun
 \subsubsection{PIDNet (Proportional-Integral-Derivative Network)}
 PIDNet~\cite{xu2023pidnet} es una arquitectura de segmentación en tiempo real inspirada en los controladores clásicos PID. A diferencia de las redes tradicionales de dos ramas (que suelen perder detalles finos o sufrir de sobrecalentamiento por desbalance de gradientes), PIDNet propone una estructura de tres ramas paralelas interconectadas:
 \begin{itemize}
-    \item \textbf{Rama Proporcional (I - Rama de Detalle):} opera en alta resolución para preservar detalles espaciales finos y bordes de grietas.
-    \item \textbf{Rama Integral (P - Rama de Contexto):} utiliza bloques convolucionales con agregación progresiva y gran campo receptivo para extraer información semántica global del fondo y la estructura.
-    \item \textbf{Rama Derivativa (D - Rama de Borde):} procesa mapas de gradiente y bordes de alta frecuencia, actuando como un diferenciador que resalta las transiciones espaciales abruptas.
+    \item \textbf{Rama Proporcional (P - Rama de Detalle):} opera en alta resolución espacial para preservar detalles espaciales finos y continuidad de estructuras.
+    \item \textbf{Rama Integral (I - Rama de Contexto):} extrae información semántica global del fondo y la estructura.
+    \item \textbf{Rama Derivativa (D - Rama de Borde):} procesa mapas de gradiente y bordes de alta frecuencia, actuando como un diferenciador que resalta las transiciones espaciales.
 \end{itemize}
 La fusión de características se realiza mediante módulos de Agregación Guiada por Píxel (PAG) y Agregación Guiada Bilateral (BGA), permitiendo que la rama de bordes module directamente la decisión semántica final. Se seleccionó la variante ligera \textbf{PIDNet-S} (7.72~M parámetros) adaptada para dos clases de salida e inicializada con pesos preentrenados en Cityscapes.
+
+Estos módulos de fusión ligeros junto con la ausencia de decodificadores pesados y la cantidad relativamente baja de parámetros es lo que permite una salida aceptable, a gran velocidad.
 
 \subsubsection{UNet++}
 UNet++~\cite{zhou2018unetplusplus} reemplaza los saltos simples de U-Net por una red densa y anidada de subredes convolucionales interconectadas. Este diseño reduce la brecha semántica (\textit{semantic gap}) entre los mapas de características del codificador (\textit{encoder}) y el decodificador (\textit{decoder}) antes de la concatenación. La experimentación formal se centró en comparar una variante ligera D2 con una variante profunda D5, manteniendo constante el codificador y el mecanismo de atención al estudiar específicamente el efecto de la profundidad.
@@ -167,7 +169,7 @@ YOLOv11~\cite{kahn2024yolo11} es el modelo más reciente de detección y segment
 \subsection{Configuración Experimental (Desarrollo)}
 
 \subsubsection{Entorno de Cómputo}
-Todos los experimentos se ejecutaron sobre instancias de Google Colab provistas de una GPU **NVIDIA Tesla T4** (16~GB VRAM GDDR6, arquitectura Turing), CPU Intel Xeon @ 2.20~GHz y 12~GB de memoria RAM del sistema. El framework principal fue PyTorch 2.x sobre CUDA 12.x.
+Todos los experimentos se ejecutaron sobre instancias de Google Colab provistas de una GPU NVIDIA Tesla T4 (16~GB VRAM GDDR6, arquitectura Turing), CPU Intel Xeon @ 2.20~GHz y 12~GB de memoria RAM del sistema. El framework principal fue PyTorch 2.x sobre CUDA 12.x.
 
 \subsubsection{Hiperparámetros de Entrenamiento}
 La Tabla~\ref{tab:hyperparams} sintetiza los hiperparámetros de optimización adoptados por cada modelo. Las discrepancias en el número de épocas y paciencia de \textit{Early Stopping} responden a la dinámica de convergencia propia de cada arquitectura.
@@ -198,9 +200,9 @@ Paciencia (\textit{Early stop}) & 10 & 10 & 30 \\
 \subsubsection{Funciones de Pérdida}
 Para compensar el marcado desbalance de píxeles, cada arquitectura empleó formulaciones orientadas a la tarea:
 
-\textbf{1) PIDNet:} empleó la función compuesta \textit{BoundaryAwareCrossEntropy} que integra la pérdida semántica clásica $\mathcal{L}_{\text{CE}}$, la pérdida de contornos $\mathcal{L}_{\text{BD}}$ (Binary Cross-Entropy ponderada sobre los bordes generados por Canny) y una pérdida de consistencia semántica de borde $\mathcal{L}_{\text{SB}}$:
+\textbf{1) PIDNet:} empleó la formulación multi-tarea compuesta oficial de 4 términos que combina supervisión profunda auxiliar, detección de contornos y atención a fronteras~\cite{xu2023pidnet}:
 \begin{equation}
-\mathcal{L}_{\text{total}}^{\text{PIDNet}} = \lambda_0 \mathcal{L}_{\text{CE}} + \lambda_1 \mathcal{L}_{\text{BD}} + \lambda_2 \mathcal{L}_{\text{SB}}
+\mathcal{L}_{\text{total}}^{\text{PIDNet}} = \lambda_0 \mathcal{L}_{\text{CE}, P} + \lambda_1 \mathcal{L}_{\text{BD}} + \lambda_2 \mathcal{L}_{\text{CE}, \text{final}} + \lambda_3 \mathcal{L}_{\text{BA}}
 \label{eq:pidnet_loss}
 \end{equation}
 
@@ -318,14 +320,14 @@ La evaluación visual de las máscaras predichas revela diferencias marcadas en 
 \subsubsection{Compromiso Precisión vs. Eficiencia (\textit{Trade-off})}
 Los resultados validan la existencia de un claro compromiso ingenieril entre costo computacional y fidelidad pixel-wise:
 \begin{itemize}
-    \item Si el objetivo es la **auditoría estructural \textit{offline} de alta precisión**, donde la exactitud métrica del ancho de grieta es prioritaria y no existen restricciones de tiempo, **UNet++ con atención scSE** representa la opción superior ($IoU_{\text{grieta}} = 0.7314$).
-    \item Si el despliegue requiere **monitoreo dinámico en tiempo real** montado en drones (UAVs) o vehículos de inspección con hardware restringido, **PIDNet-S** y **YOLO11-Seg** ofrecen la mejor solución de compromiso, procesando a más de $69-86$~FPS en PIDNet y $>45$~FPS en YOLO con una pérdida de $IoU$ de apenas 5 a 6 puntos porcentuales respecto a UNet++.
+    \item Si el objetivo es la auditoría estructural \textit{offline} de alta precisión, donde la exactitud métrica del ancho de grieta es prioritaria y no existen restricciones de tiempo, UNet++ con atención scSE representa la opción superior ($IoU_{\text{grieta}} = 0.7314$).
+    \item Si el despliegue requiere monitoreo dinámico en tiempo real montado en drones (UAVs) o vehículos de inspección con hardware restringido, PIDNet-S y YOLO11-Seg ofrecen la mejor solución de compromiso, procesando a más de $69-86$~FPS en PIDNet y $>45$~FPS en YOLO con una pérdida de $IoU$ de apenas 5 a 6 puntos porcentuales respecto a UNet++.
 \end{itemize}
 
 \subsubsection{Análisis Crítico de Limitaciones Experimentales}
 En consonancia con las pautas de rigor metodológico, es fundamental declarar explícitamente las limitaciones y divergencias técnicas derivadas del trabajo descentralizado del equipo:
 \begin{itemize}
-    \item \textbf{Diferencias de preprocesamiento y representación:} mientras PIDNet y UNet++ operaron directamente sobre máscaras ráster pixel-wise, YOLOv11 requirió vectorizar componentes conexas a polígonos. Esta transformación introduce un techo teórico intrínseco en la representación geométrica de pequeños vértices.
+    \item \textbf{Diferencias de preprocesamiento y representación:} mientras PIDNet y UNet++ operaron directamente sobre máscaras pixel-wise, YOLOv11 requirió vectorizar componentes conexas a polígonos. Esta transformación introduce un techo teórico intrínseco en la representación geométrica de pequeños vértices.
     \item \textbf{Estrategias de optimización heterogéneas:} cada modelo convergió bajo esquemas de épocas ($50$ en PIDNet, $100$ en UNet++, $200$ en YOLO) y combinaciones de pérdidas disímiles (Boundary CE vs. BCE+Dice vs. YOLO native loss). Si bien esto optimizó el rendimiento individual de cada arquitectura, introduce factores de confusión que impiden aislar estrictamente el impacto exclusivo de la topología de la red.
     \item \textbf{Tamaño del dataset:} con 300 imágenes de entrenamiento, la generalización a escenarios con suciedad extrema o artefactos climáticos fuera del dominio de DeepCrack constituye un desafío a validar en trabajos futuros.
 \end{itemize}
