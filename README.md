@@ -64,8 +64,11 @@ tp_computer_vision_ii/
 │   │   ├── 02_train.ipynb
 │   │   ├── 03_eval.ipynb
 │   │   └── prepare_data.py
-│   └── unet/                         # Módulo U-Net / U-Net++
-│       └── models/                   # Notebooks de arquitecturas U-Net++ con backbones
+│   └── unet/                         # Módulo U-Net++
+│       └── figuras presentación/     # Contiene figura utilizada en presentación 
+│       └── training/                 # Notebooks de entrenamiento de variantes de UNET++
+│       └── benchmarks/               # Notebooks con benchmarks de las 3 mejores variantes de UNET++ experimentadas
+│       └── infer_video_unet.ipynb/   # Notebook para generación de video de segmentación utilizando UNET++ ResNet34 con scSE
 ├── datasets/                         # Datasets e imágenes/videos (ignorado en git)
 │   ├── dataset_1000/
 │   └── videos/
