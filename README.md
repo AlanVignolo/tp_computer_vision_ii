@@ -126,11 +126,7 @@ Suite estandarizado para mediciones científicas de velocidad y complejidad comp
 ---
 
 ## 6. YOLO-Seg: Segmentación de Instancias (YOLOv11)
-
-> *Sección en desarrollo / Placeholder*
-
 Módulo para la detección y segmentación de grietas como instancias individuales mediante **YOLOv11-Seg** (Ultralytics).
-
 - **Inspección de etiquetas**: [`src/yolo_seg/01_check_labels.ipynb`](src/yolo_seg/01_check_labels.ipynb)
 - **Entrenamiento**: [`src/yolo_seg/02_train.ipynb`](src/yolo_seg/02_train.ipynb)
 - **Evaluación**: [`src/yolo_seg/03_eval.ipynb`](src/yolo_seg/03_eval.ipynb)
@@ -138,9 +134,5 @@ Módulo para la detección y segmentación de grietas como instancias individual
 ---
 
 ## 7. U-Net / U-Net++: Segmentación Basada en Encoders Pre-entrenados
-
-> *Sección en desarrollo / Placeholder*
-
 Módulo para la comparación de arquitecturas clásicas de segmentación basadas en **U-Net** y **U-Net++** con múltiples backbones (ResNet34, EfficientNet-B0) y mecanismos de atención espacial y de canal (SCSE).
-
 - **Notebooks de experimentación**: [`src/unet/models/`](src/unet/models/)
