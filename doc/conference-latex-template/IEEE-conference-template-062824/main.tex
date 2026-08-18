@@ -42,7 +42,7 @@ alanvignolo1999@gmail.com}
 \maketitle
 
 \begin{abstract}
-La detección temprana y delimitación precisa de fisuras en estructuras civiles (puentes, pavimentos y presas) resulta crítica para la planificación del mantenimiento preventivo y la seguridad estructural. Tradicionalmente, este monitoreo se realiza mediante inspecciones visuales manuales, un procedimiento subjetivo, costoso y de alto riesgo en zonas de difícil acceso. Este trabajo presenta un estudio comparativo de tres arquitecturas de segmentación semántica representativas del estado del arte contemporáneo: UNet++ (enfoque clásico basado en conexiones densas anidadas), PIDNet (arquitectura de tres ramas diseñada para segmentación en tiempo real guiada por bordes) y YOLOv11-Seg (detector de una etapa de última generación adaptado a segmentación). Los modelos fueron evaluados sobre el dataset público DeepCrack utilizando un entorno de hardware estandarizado (GPU NVIDIA Tesla T4). El desempeño se analiza en función de la precisión a nivel de píxel ($mIoU$ global e $IoU$ específico de grieta) y la eficiencia computacional (latencia de inferencia y tasa de frames por segundo). Los resultados revelan un marcado compromiso técnico: mientras que UNet++ alcanza la mayor fidelidad de segmentación ($IoU_{\text{grieta}} = 0.7314$, $mIoU = 0.8588$), los modelos orientados a tiempo real demuestran un balance operativo superior, alcanzando PIDNet-S un $IoU_{\text{grieta}}$ de $0.6660$ a $86.06$~FPS (latencia neta de $11.62$~ms en forward pass y $14.48$~ms / $69.05$~FPS en pipeline completo) y YOLOv11-Seg hasta $0.6756$ de $IoU_{\text{grieta}}$ con mínimo costo de cómputo. Finalmente, se analizan críticamente las limitaciones metodológicas del desarrollo descentralizado y se proponen criterios de selección para la integración en sistemas de inspección robótica y vehículos aéreos no tripulados (UAVs).
+La detección temprana y delimitación precisa de fisuras en estructuras civiles (puentes, pavimentos y presas) resulta crítica para la planificación del mantenimiento preventivo y la seguridad estructural. Tradicionalmente, este monitoreo se realiza mediante inspecciones visuales manuales, un procedimiento subjetivo, costoso y de alto riesgo en zonas de difícil acceso. Este trabajo presenta un estudio comparativo de tres arquitecturas de segmentación semántica representativas del estado del arte contemporáneo: UNet++ (enfoque clásico basado en conexiones densas anidadas), PIDNet (arquitectura de tres ramas diseñada para segmentación en tiempo real guiada por bordes) y YOLOv11-Seg (detector de una etapa de última generación adaptado a segmentación). Los modelos fueron evaluados sobre el dataset público DeepCrack utilizando un entorno de hardware estandarizado (GPU NVIDIA Tesla T4). El desempeño se analiza en función de la precisión a nivel de píxel ($mIoU$ global e $IoU$ específico de grieta) y la eficiencia computacional (latencia de inferencia y tasa de frames por segundo). Los resultados revelan un marcado compromiso técnico: mientras que UNet++ alcanza la mayor fidelidad de segmentación ($IoU_{\text{grieta}} = 0.7288$, $mIoU = 0.8574$), los modelos orientados a tiempo real demuestran un balance operativo superior, alcanzando PIDNet-S un $IoU_{\text{grieta}}$ de $0.6660$ a $86.06$~FPS (latencia neta de $11.62$~ms en forward pass y $14.48$~ms / $69.05$~FPS en pipeline completo) y YOLOv11-Seg hasta $0.6756$ de $IoU_{\text{grieta}}$ con mínimo costo de cómputo. Finalmente, se analizan críticamente las limitaciones metodológicas del desarrollo descentralizado y se proponen criterios de selección para la integración en sistemas de inspección robótica y vehículos aéreos no tripulados (UAVs).
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -149,18 +149,20 @@ La fusión de características se realiza mediante módulos de Agregación Guiad
 Estos módulos de fusión ligeros junto con la ausencia de decodificadores pesados y la cantidad relativamente baja de parámetros es lo que permite una salida aceptable, a gran velocidad.
 
 \subsubsection{UNet++}
-UNet++~\cite{zhou2018unetplusplus} reemplaza los saltos simples de U-Net por una red densa y anidada de subredes convolucionales interconectadas. Este diseño reduce la brecha semántica (\textit{semantic gap}) entre los mapas de características del codificador (\textit{encoder}) y el decodificador (\textit{decoder}) antes de la concatenación. La experimentación formal se centró en comparar una variante ligera D2 con una variante profunda D5, manteniendo constante el codificador y el mecanismo de atención al estudiar específicamente el efecto de la profundidad.
 
-La configuración utilizada fue la siguiente:
+UNet++~\cite{zhou2018unetplusplus} reemplaza los saltos simples de U-Net por una red densa y anidada de subredes convolucionales interconectadas. Este diseño reduce la brecha semántica (\textit{semantic gap}) entre los mapas de características del codificador (\textit{encoder}) y el decodificador (\textit{decoder}) antes de la concatenación.
+
+En esta línea de trabajo se utilizó una única profundidad del decodificador y se exploró el efecto de dos decisiones arquitectónicas. En primer lugar, se compararon distintos codificadores (\textit{encoders}) con pesos preentrenados en ImageNet:
 
 \begin{itemize}
-    \item \textbf{Codificador:} ResNet-34 preentrenado en ImageNet.
-    \item \textbf{Profundidad del decodificador:} D2 y D5.
-    \item \textbf{Atención:} bloques \textit{spatial and channel squeeze and excitation} (scSE) en el decodificador.
-    \item \textbf{Implementación:} librería \texttt{segmentation\_models\_pytorch}.
+    \item ResNet-18;
+    \item ResNet-34;
+    \item EfficientNet-B0.
 \end{itemize}
 
-D2 se considera la configuración ligera, orientada a reducir la complejidad y la latencia, mientras que D5 representa la configuración de mayor capacidad, orientada a maximizar la recuperación de detalles finos. La comparación experimental y las conclusiones se centran exclusivamente en estas dos configuraciones. La selección de distintos codificadores se fundamenta en trabajos previos que muestran que la capacidad y la familia del codificador influyen en la calidad de la segmentación de grietas~\cite{konig2021optimized}.
+En segundo lugar, se evaluó el uso de bloques de atención \textit{spatial and channel squeeze and excitation} (scSE) en el decodificador, comparando configuraciones con y sin este mecanismo.
+
+La implementación se realizó mediante la biblioteca \texttt{segmentation\_models\_pytorch}. De esta manera, el análisis se centró en determinar cómo la familia del codificador y la incorporación de atención scSE afectan el rendimiento de UNet++ para la segmentación de grietas, manteniendo constante la profundidad del decodificador y el resto del protocolo experimental.
 
 \subsubsection{YOLOv11-Seg (Ultralytics)}
 % [TODO PARA ALAN - YOLOv11-Seg: Confirmar arquitectura y variantes evaluadas]
@@ -248,6 +250,8 @@ F1 = \frac{2 \cdot TP}{2 \cdot TP + FP + FN} = \frac{2 \cdot \text{Precision} \c
 \subsection{Comparación Cuantitativa}
 Los resultados cuantitativos obtenidos sobre el conjunto de evaluación de DeepCrack (237 imágenes de test) se consolidan en la Tabla~\ref{tab:results_comparison}.
 
+
+
 \begin{table*}[t]
 \caption{Comparación Cuantitativa de Desempeño en Segmentación y Eficiencia Computacional sobre DeepCrack (GPU NVIDIA Tesla T4)}
 \label{tab:results_comparison}
@@ -256,9 +260,9 @@ Los resultados cuantitativos obtenidos sobre el conjunto de evaluación de DeepC
 \toprule
 \textbf{Modelo} & \textbf{Backbone / Variante} & \textbf{$mIoU_{\text{2c}}$} & \textbf{$IoU_{\text{grieta}}$} & \textbf{$F1\text{-Score}$} & \textbf{Precision} & \textbf{Recall} & \textbf{Latencia (ms)} & \textbf{FPS} \\
 \midrule
-\textbf{UNet++} & ResNet-34 + scSE (5 capas) & \textbf{0.8588} & \textbf{0.7314} & \textbf{0.8449} & 0.8504 & \textbf{0.8394} & $\approx 112.50$ & $\approx 8.89$ \\
-UNet++ & ResNet-34 (5 capas, base) & 0.8524 & 0.7187 & 0.8363 & \textbf{0.8828} & 0.7945 & $\approx 105.00$ & $\approx 9.52$ \\
-UNet++ & EfficientNet-B0 (5 capas) & 0.8584 & 0.7306 & 0.8444 & 0.8584 & 0.8307 & $\approx 98.00$ & $\approx 10.20$ \\
+\textbf{UNet++} & ResNet-34 + scSE (5 capas) & \textbf{0.8574} & {0.7288} & \textbf{0.8431} & 0.8457 & \textbf{0.8405} & $\approx 45.29$ & $\approx 22.08$ \\
+UNet++ & ResNet-34 (5 capas, base) & 0.8524 & 0.7187 & 0.8363 & \textbf{0.8828} & 0.7945 & $\approx 27.48$ & $\approx 36.39$ \\
+UNet++ & EfficientNet-B0 + scSE (5 capas) & 0.8595 & \textbf{0.7324} & 0.8456 & 0.8777 & 0.8157 & $\approx 38.49$ & $\approx 25.98$ \\
 \midrule
 \textbf{PIDNet-S} & 3-Ramas (Detalle/Contexto/Borde) & 0.8246 & 0.6660 & 0.7995 & 0.8320 & 0.7690 & \textbf{11.62} & \textbf{86.06} \\
 \midrule
@@ -274,8 +278,7 @@ YOLO11n-Seg* & Nano Hi-Res ($\text{imgsz}=768$) & 0.8438 & 0.7026 & 0.8254 & 0.8
 
 Del análisis cuantitativo se desprenden los siguientes aspectos fundamentales:
 \begin{enumerate}
-    \item \textbf{Liderazgo en fidelidad de segmentación:} UNet++ con codificador ResNet-34 y atención scSE alcanzó el mayor desempeño global con un $IoU_{\text{grieta}}$ de $0.7314$ y un $F1\text{-Score}$ de $0.8449$, superando a las demás arquitecturas en capacidad de delinear bifurcaciones y grietas complejas.
-    \item \textbf{Eficacia del diseño tri-rama de PIDNet:} PIDNet-S alcanzó un sólido $IoU_{\text{grieta}}$ de $0.6660$ ($mIoU = 0.8246$) con una latencia neta de $11.62$~ms ($86.06$~FPS) en el forward pass nativo en GPU y $14.48$~ms ($69.05$~FPS) en el pipeline completo extremo a extremo. Su arquitectura ligera ($7.72$~M parámetros) demostró una alta escalabilidad, alcanzando más de $400$~FPS al procesar lotes con $\text{batch size} = 8$. La curva de convergencia (Fig.~\ref{fig:pidnet_curves}) demuestra una estabilización óptima alrededor de la época 29, donde la pérdida de borde guía efectivamente la delimitación sin provocar sobreajuste temprano.
+    \item \textbf{Desempeño de UNet++ con ResNet-34 y scSE:} esta configuración alcanzó un $IoU_{\text{grieta}}$ de $0.7288$, un $mIoU$ de $0.8574$, un $F1\text{-Score}$ de $0.8431$, una precisión de $0.8457$ y un \textit{recall} de $0.8405$. Su latencia fue de aproximadamente $45.29$~ms ($22.08$~FPS). La variante con EfficientNet-B0 y scSE obtuvo un $IoU$ de $0.7306$, mientras que la configuración base sin scSE alcanzó $0.7187$.
     \item \textbf{Comportamiento de la familia YOLOv11:} YOLO11s-Seg y YOLO11n-Seg obtuvieron un $IoU_{\text{grieta}}$ de $0.6756$ y $0.6686$ respectivamente. Al elevar la resolución a $768\times 768$ (YOLO11n Hi-Res), el $IoU_{\text{grieta}}$ ascendió notablemente a $0.7026$, confirmando que la limitación principal en modelos basados en \textit{anchor-free/prototipos} sobre fisuras delgadas radica en la resolución espacial de los mapas de características.
 \end{enumerate}
 
@@ -320,7 +323,7 @@ La evaluación visual de las máscaras predichas revela diferencias marcadas en 
 \subsubsection{Compromiso Precisión vs. Eficiencia (\textit{Trade-off})}
 Los resultados validan la existencia de un claro compromiso ingenieril entre costo computacional y fidelidad pixel-wise:
 \begin{itemize}
-    \item Si el objetivo es la auditoría estructural \textit{offline} de alta precisión, donde la exactitud métrica del ancho de grieta es prioritaria y no existen restricciones de tiempo, UNet++ con atención scSE representa la opción superior ($IoU_{\text{grieta}} = 0.7314$).
+    \item Si el objetivo es la auditoría estructural \textit{offline} de alta precisión, donde la exactitud métrica del ancho de grieta es prioritaria y no existen restricciones de tiempo, UNet++ con atención scSE representa la opción superior ($IoU_{\text{grieta}} = 0.7324$).
     \item Si el despliegue requiere monitoreo dinámico en tiempo real montado en drones (UAVs) o vehículos de inspección con hardware restringido, PIDNet-S y YOLO11-Seg ofrecen la mejor solución de compromiso, procesando a más de $69-86$~FPS en PIDNet y $>45$~FPS en YOLO con una pérdida de $IoU$ de apenas 5 a 6 puntos porcentuales respecto a UNet++.
 \end{itemize}
 
@@ -337,9 +340,9 @@ En consonancia con las pautas de rigor metodológico, es fundamental declarar ex
 A partir de la experimentación, análisis cuantitativo y evaluación comparativa de los tres modelos de segmentación semántica sobre el dataset DeepCrack, se derivan las siguientes cinco conclusiones principales:
 
 \begin{enumerate}
-    \item \textbf{Fidelidad de segmentación semántica:} UNet++ con codificador ResNet-34 y bloques de atención espacial y de canal (scSE) demostró el desempeño más alto en precisión a nivel de píxel ($IoU_{\text{grieta}} = 0.7314$, $mIoU = 0.8588$), confirmando la superioridad de las conexiones densas anidadas para preservar la continuidad en fisuras estructurales complejas.
+    \item \textbf{Fidelidad de segmentación semántica:} UNet++ con codificador ResNet-34 y bloques de atención espacial y de canal (scSE) demostró el desempeño más alto en precisión a nivel de píxel ($IoU_{\text{grieta}} = 0.7288$, $mIoU = 0.8574 $), confirmando la superioridad de las conexiones densas anidadas para preservar la continuidad en fisuras estructurales complejas.
     \item \textbf{Viabilidad operativa en tiempo real:} PIDNet-S y YOLO11-Seg probaron ser alternativas altamente eficientes para procesamiento en tiempo real, alcanzando tasas de $86.06$~FPS ($69.05$~FPS en pipeline completo) y hasta $>45-68$~FPS respectivamente sobre GPU NVIDIA Tesla T4, lo que habilita su despliegue directo en flujos de video continuo de alta resolución sin degradación perceptiva.
-    \item \textbf{Eficacia de la supervisión de contornos (PIDNet):} La incorporación de una rama derivativa de bordes explícita modulada mediante pérdida \textit{Boundary-Aware} permitió a PIDNet-S alcanzar un $IoU_{\text{grieta}}$ de $0.6660$ con una latencia de solo $11.62$~ms (reduciendo en casi un 90\% el tiempo de inferencia respecto a UNet++), evidenciando la efectividad de guiar la segmentación de estructuras delgadas mediante información de alta frecuencia.
+    \item \textbf{Eficacia de la supervisión de contornos (PIDNet):} La incorporación de una rama derivativa de bordes explícita modulada mediante pérdida \textit{Boundary-Aware} permitió a PIDNet-S alcanzar un $IoU_{\text{grieta}}$ de $0.6660$ con una latencia de solo $11.62$~ms ($86.06$~FPS). Esto representa una reducción aproximada del $74.34\%$ en la latencia y una velocidad de inferencia aproximadamente $3.90$ veces superior respecto a UNet++ con ResNet-34 y atención scSE, cuya latencia fue de $45.29$~ms ($22.08$~FPS). Estos resultados evidencian la efectividad de guiar la segmentación de estructuras delgadas mediante información de alta frecuencia.
     \item \textbf{Criterios de selección para ingeniería civil:} Se establece una pauta de selección clara según el caso de uso: UNet++ se consolida como el modelo óptimo para inspecciones estáticas y auditorías forenses de alta precisión (\textit{offline}), mientras que PIDNet y YOLOv11 son los modelos indicados para inspecciones dinámicas y patrullajes autónomos mediante drones (UAVs) o vehículos terrestres.
     \item \textbf{Lecciones metodológicas y trabajo futuro:} El estudio demostró la importancia crítica de unificar formatos de entrada y criterios de evaluación. Como trabajo futuro, se proyecta integrar técnicas de cuantificación métrica del ancho de grieta en milímetros combinando la segmentación con parámetros de cámara UAV~\cite{liu2025crack}, así como la cuantización a FP16/INT8 mediante TensorRT para su implementación en dispositivos embebidos de bajo consumo (e.g., NVIDIA Jetson).
 \end{enumerate}
