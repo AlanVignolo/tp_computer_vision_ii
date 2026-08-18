@@ -165,7 +165,6 @@ En segundo lugar, se evaluó el uso de bloques de atención \textit{spatial and 
 La implementación se realizó mediante la biblioteca \texttt{segmentation\_models\_pytorch}. De esta manera, el análisis se centró en determinar cómo la familia del codificador y la incorporación de atención scSE afectan el rendimiento de UNet++ para la segmentación de grietas, manteniendo constante la profundidad del decodificador y el resto del protocolo experimental.
 
 \subsubsection{YOLOv11-Seg (Ultralytics)}
-% [TODO PARA ALAN - YOLOv11-Seg: Confirmar arquitectura y variantes evaluadas]
 YOLOv11~\cite{kahn2024yolo11} es el modelo más reciente de detección y segmentación de una sola etapa de Ultralytics. Su cabezal de segmentación opera en paralelo al cabezal de detección: predice $k$ coeficientes de máscara por cada caja delimitadora candidata y los combina linealmente con $k$ máscaras prototipo generadas por un módulo \textit{Proto} en la base del decodificador. Se evaluó la variante \textbf{YOLO11n-seg} (Nano) y \textbf{YOLO11s-seg} (Small), con pesos iniciales de COCO-Seg, transformando las máscaras predichas a una representación binaria global para permitir una comparación equitativa con los modelos semánticos puros.
 
 \subsection{Configuración Experimental (Desarrollo)}
@@ -309,14 +308,6 @@ La evaluación visual de las máscaras predichas revela diferencias marcadas en 
 \caption{Evaluación cualitativa de \textbf{YOLOv11-Seg} (mejor modelo estricto) sobre DeepCrack, en los casos de peor, mediano y mejor $IoU$: imagen original, máscara ground-truth y predicción.}
 \label{fig:qualitative_yolo}
 \end{figure}
-
-% [TODO PARA AGUSTÍN - UNet++: agregar figura de muestras cualitativas de UNet++]
-% \begin{figure}[t]
-% \centering
-% \includegraphics[width=0.9\columnwidth]{figs/unet/seg_samples_unet.png}
-% \caption{Evaluación cualitativa de \textbf{UNet++} (ResNet-34 + scSE) sobre DeepCrack.}
-% \label{fig:qualitative_unet}
-% \end{figure}
 
 \subsection{Discusión y Limitaciones Metodológicas}
 
