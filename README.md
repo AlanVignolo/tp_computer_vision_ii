@@ -133,6 +133,7 @@ Módulo para la detección y segmentación de grietas como instancias individual
 
 ---
 
-## 7. U-Net / U-Net++: Segmentación Basada en Encoders Pre-entrenados
-Módulo para la comparación de arquitecturas clásicas de segmentación basadas en **U-Net** y **U-Net++** con múltiples backbones (ResNet34, EfficientNet-B0) y mecanismos de atención espacial y de canal (SCSE).
-- **Notebooks de experimentación**: [`src/unet/models/`](src/unet/models/)
+## 7. U-Net++: Segmentación Basada en Encoders Pre-entrenados
+Módulo para la comparación de arquitecturas clásicas de segmentación basadas en **U-Net++** con múltiples backbones (ResNet34, EfficientNet-B0) y mecanismos de atención espacial y de canal (SCSE).
+- **Notebooks de experimentación y entrenamiento**: [`src/unet/models/`](src/unet/training/)
+- **Benchmarks**: [`src/unet/models/benchmarks`](src/unet/models/benchmarks)
