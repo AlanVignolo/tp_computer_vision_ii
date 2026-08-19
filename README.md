@@ -60,10 +60,12 @@ tp_computer_vision_ii/
 │   │   ├── pretrained_models/        # Backbones preentrenados de Cityscapes (.pt)
 │   │   └── best_trained/             # Checkpoints de los mejores modelos entrenados (.pth)
 │   ├── yolo_seg/                     # Módulo YOLO-Seg (Segmentación de Instancias)
-│   │   ├── 01_check_labels.ipynb
-│   │   ├── 02_train.ipynb
-│   │   ├── 03_eval.ipynb
-│   │   └── prepare_data.py
+│   │   ├── 01_check_labels.ipynb     # Inspección de las etiquetas convertidas a polígonos
+│   │   ├── 02_train.ipynb            # Entrenamiento de las variantes (nano, small, dilated1, hires)
+│   │   ├── 03_eval.ipynb             # Evaluación semántica corregida y comparable
+│   │   ├── benchmark_yolo.ipynb      # Benchmark de velocidad (forward/pipeline, batch) y fila LaTeX
+│   │   ├── prepare_data.py           # Conversión máscara→polígono y generación de datasets YOLO-Seg
+│   │   └── figures/                  # Figuras generadas (muestras, techo de polígonos, curvas)
 │   └── unet/                         # Módulo U-Net++
 │       └── figuras presentación/     # Contiene figura utilizada en presentación 
 │       └── training/                 # Notebooks de entrenamiento de variantes de UNET++
@@ -126,10 +128,26 @@ Suite estandarizado para mediciones científicas de velocidad y complejidad comp
 ---
 
 ## 6. YOLO-Seg: Segmentación de Instancias (YOLOv11)
-Módulo para la detección y segmentación de grietas como instancias individuales mediante **YOLOv11-Seg** (Ultralytics).
-- **Inspección de etiquetas**: [`src/yolo_seg/01_check_labels.ipynb`](src/yolo_seg/01_check_labels.ipynb)
-- **Entrenamiento**: [`src/yolo_seg/02_train.ipynb`](src/yolo_seg/02_train.ipynb)
-- **Evaluación**: [`src/yolo_seg/03_eval.ipynb`](src/yolo_seg/03_eval.ipynb)
+Módulo para la detección y segmentación de grietas como instancias individuales mediante **YOLOv11-Seg** (Ultralytics). A diferencia de PIDNet y U-Net++, que operan sobre máscaras de píxeles, YOLO-Seg entrena sobre **polígonos**: las máscaras de DeepCrack se convierten a contornos (sin simplificar, para no perder el espesor de las grietas finas) mediante `prepare_data.py`.
+
+### 6.1 Prerrequisitos
+1. **Dataset base**: descargar `dataset_1000` (DeepCrack) con `uv run python src/download_data.py --seg` (ver Sección 2) **antes** de correr los notebooks.
+2. **Pesos base**: los checkpoints `yolo11n-seg.pt` / `yolo11s-seg.pt` los descarga Ultralytics automáticamente en la primera ejecución (no se versionan en git).
+3. **Datasets derivados**: `02_train.ipynb` genera solo, vía `prepare_data.py`, las versiones en formato YOLO-Seg (`dataset_1000_yoloseg_fullpoly` y `dataset_1000_yoloseg_dilated1`). No hay que prepararlas a mano.
+
+### 6.2 Notebooks (correr en orden)
+- **Inspección de etiquetas**: [`src/yolo_seg/01_check_labels.ipynb`](src/yolo_seg/01_check_labels.ipynb) — verifica la conversión máscara→polígono.
+- **Entrenamiento**: [`src/yolo_seg/02_train.ipynb`](src/yolo_seg/02_train.ipynb) — entrena las variantes (nano, small, dilated1, hires). Con `RUN_TRAINING=False` reutiliza los pesos ya entrenados en disco en lugar de reentrenar.
+- **Evaluación**: [`src/yolo_seg/03_eval.ipynb`](src/yolo_seg/03_eval.ipynb) — evaluación semántica comparable (IoU de grieta, mIoU, Precision/Recall/F1) con corrección del letterbox vía `retina_masks=True`.
+
+### 6.3 Benchmark de Inferencia ([`src/yolo_seg/benchmark_yolo.ipynb`](src/yolo_seg/benchmark_yolo.ipynb))
+Mismo protocolo que el benchmark de PIDNet (Sección 5.4), para que las latencias sean comparables:
+- **Forward puro** del `nn.Module` interno con `torch.cuda.Event` + warm-up (FP32 y AMP FP16).
+- **Pipeline end-to-end** (`predict` de Ultralytics: preprocesamiento + NMS + ensamblado de máscaras).
+- **Escalabilidad por batch** ($BS \in \{1, 2, 4, 8\}$) y **fila LaTeX** para la Tabla II del paper.
+
+> [!TIP]
+> El benchmark debe correrse en la **misma GPU que PIDNet** (Colab Tesla T4) para que la comparación de latencias sea válida.
 
 ---
 
